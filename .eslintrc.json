@@ -6,7 +6,8 @@
 	},
 	"extends": "eslint:recommended",
 	"parserOptions": {
-		"ecmaVersion": "latest"
+		"ecmaVersion": "latest",
+		"sourceType": "module"
 	},
 	"rules": {
 		"indent": ["error", "tab"],
@@ -14,6 +15,7 @@
 		"quotes": ["warn", "double"],
 		"semi": ["error", "always"],
 		"no-unused-vars": "warn",
-		"no-constant-condition": "off"
+		"no-constant-condition": "off",
+		"no-undef": "off"
 	}
 }

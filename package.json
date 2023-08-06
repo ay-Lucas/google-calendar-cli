@@ -2,9 +2,10 @@
 	"name": "google-calendar-cli",
 	"version": "1.0.0",
 	"description": "Node js cli tool allows you to manage google calendar from the command line",
+	"type": "module",
 	"main": "index.js",
 	"scripts": {
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"dev": "nodemon ./src/index.js"
 	},
 	"repository": {
 		"type": "git",
