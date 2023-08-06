@@ -14,7 +14,8 @@
 	"author": "Lucas A",
 	"license": "ISC",
 	"devDependencies": {
-		"eslint": "^8.46.0"
+		"eslint": "^8.46.0",
+		"nodemon": "^3.0.1"
 	},
 	"dependencies": {
 		"commander": "^11.0.0",
