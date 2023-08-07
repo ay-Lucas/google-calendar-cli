@@ -12,14 +12,12 @@ const calendar = google.calendar({
 	auth: process.env.GOOGLE_CALENDAR_API_KEY,
 });
 const PORT = process.env.PORT || 3500;
-
+const SERVER_URL = "http://localhost:" + PORT;
 const oauth2Client = new google.auth.OAuth2(process.env.CLIENT_ID, process.env.CLIENT_SECRET, process.env.REDIRECT_URL);
 
 const scopes = ["https://www.googleapis.com/auth/calendar"];
-
 app.get("/google", (req, res) => {
 	const url = oauth2Client.generateAuthUrl({
-		// 'online' (default) or 'offline' (gets refresh_token)
 		access_type: "offline",
 		scope: scopes,
 	});
@@ -32,13 +30,9 @@ app.get("/oauth2callback", async (req, res) => {
 	const { tokens } = await oauth2Client.getToken(code);
 	oauth2Client.setCredentials(tokens);
 	res.send({ msg: "Successful login" });
-	// console.log(oauth2Client.getToken(code));
-	// console.log(code);
-	// res.send("active");
 });
 
 app.get("/schedule_event", async (req, res) => {
-	// console.log(oauth2Client.credentials.access_token);
 	await calendar.events.insert({
 		calendarId: "primary",
 		auth: oauth2Client,
@@ -59,4 +53,5 @@ app.get("/schedule_event", async (req, res) => {
 });
 app.listen(PORT, () => {
 	console.log("Server started on part", PORT);
+	console.log(`Click the link to login to your Google account: \t${SERVER_URL}/google`);
 });
