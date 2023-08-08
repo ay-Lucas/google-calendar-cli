@@ -1,57 +1,84 @@
-import dotenv from "dotenv";
-dotenv.config({});
-
-import express from "express";
-const app = express();
-
-import dayjs from "dayjs";
+import { authenticate } from "@google-cloud/local-auth";
+import fs from "fs/promises";
 import { google } from "googleapis";
-import { v4 as uuid } from "uuid";
-const calendar = google.calendar({
-	version: "v3",
-	auth: process.env.GOOGLE_CALENDAR_API_KEY,
-});
-const PORT = process.env.PORT || 3500;
-const SERVER_URL = "http://localhost:" + PORT;
-const oauth2Client = new google.auth.OAuth2(process.env.CLIENT_ID, process.env.CLIENT_SECRET, process.env.REDIRECT_URL);
+import path from "path";
+import process from "process";
+const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 
-const scopes = ["https://www.googleapis.com/auth/calendar"];
-app.get("/google", (req, res) => {
-	const url = oauth2Client.generateAuthUrl({
-		access_type: "offline",
-		scope: scopes,
+// The file token.json stores the user's access and refresh tokens, and is
+// created automatically when the authorization flow completes for the first time.
+const TOKEN_PATH = path.join(process.cwd(), "token.json");
+const CREDENTIALS_PATH = path.join(process.cwd(), "desktop_client_credentials.json");
+
+// Reads previously authorized credentials from the save file.
+
+async function loadSavedCredentialsIfExist() {
+	try {
+		const content = await fs.readFile(TOKEN_PATH);
+		const credentials = JSON.parse(content);
+		return google.auth.fromJSON(credentials);
+	} catch (error) {
+		console.log(`credential load error ${error}`);
+		return null;
+	}
+}
+
+// Serializes credentials to a file compatible with GoogleAUth.fromJSON.
+async function saveCredentials(client) {
+	const content = await fs.readFile(CREDENTIALS_PATH);
+	const keys = JSON.parse(content);
+	const key = keys.installed || keys.web;
+	const payload = JSON.stringify({
+		type: "authorized_user",
+		client_id: key.client_id,
+		client_secret: key.client_secret,
+		refresh_token: client.credentials.refresh_token,
 	});
+	await fs.writeFile(TOKEN_PATH, payload);
+}
 
-	res.redirect(url);
-});
+/**
+ * Load or request or authorization to call APIs.
+ *
+ */
+async function authorize() {
+	let client = await loadSavedCredentialsIfExist();
+	if (client) {
+		console.log("client === true");
+		return client;
+	}
+	client = await authenticate({
+		scopes: SCOPES,
+		keyfilePath: CREDENTIALS_PATH,
+	});
+	if (client.credentials) {
+		await saveCredentials(client);
+	}
+	return client;
+}
 
-app.get("/oauth2callback", async (req, res) => {
-	const code = req.query.code;
-	const { tokens } = await oauth2Client.getToken(code);
-	oauth2Client.setCredentials(tokens);
-	res.send({ msg: "Successful login" });
-});
-
-app.get("/schedule_event", async (req, res) => {
-	await calendar.events.insert({
+/**
+ * Lists the next 10 events on the user's primary calendar.
+ */
+async function listEvents(auth) {
+	const calendar = google.calendar({ version: "v3", auth });
+	const res = await calendar.events.list({
 		calendarId: "primary",
-		auth: oauth2Client,
-		requestBody: {
-			summary: "test event",
-			description: "pls work, oh plss work",
-			start: {
-				dateTime: dayjs(new Date()).add(1, "day").toISOString(),
-				timeZone: "America/New_York",
-			},
-			end: {
-				dateTime: dayjs(new Date()).add(2, "day").toISOString(),
-				timeZone: "America/New_York",
-			},
-		},
+		timeMin: new Date().toISOString(),
+		maxResults: 10,
+		singleEvents: true,
+		orderBy: "startTime",
 	});
-	res.send({ msg: "Done" });
-});
-app.listen(PORT, () => {
-	console.log("Server started on part", PORT);
-	console.log(`Click the link to login to your Google account: \t${SERVER_URL}/google`);
-});
+	const events = res.data.items;
+	if (!events || events.length === 0) {
+		console.log("No upcoming events found.");
+		return;
+	}
+	console.log("Upcoming 10 events:");
+	events.map((event, i) => {
+		const start = event.start.dateTime || event.start.date;
+		console.log(`${start} - ${event.summary}`);
+	});
+}
+
+authorize().then(listEvents).catch(console.error);
