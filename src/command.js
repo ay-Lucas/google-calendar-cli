@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import dayjs from "dayjs";
-import { listEvents } from "./oldindex.js";
+import { reqest } from "./index.js";
 const program = new Command();
 program.name("google-calendar-cli").description("CLI for google calendar").version("0.0.1");
 program
@@ -13,6 +13,7 @@ program
 	.action((string, options) => {
 		console.log(string, "go work out your legs punk");
 		console.log(options);
+		reqest("add");
 	});
 
 program
@@ -22,7 +23,8 @@ program
 	.option("-t, --today", "list current day events")
 	.option("-w, --week", "list events for the next week")
 	.action(() => {
-		listEvents();
+		// index;
+		reqest("list");
 	});
 program.parse(process.argv);
 

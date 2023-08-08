@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import { google } from "googleapis";
 import path from "path";
 import process from "process";
+
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 
 // The file token.json stores the user's access and refresh tokens, and is
@@ -12,7 +13,7 @@ const CREDENTIALS_PATH = path.join(process.cwd(), "desktop_client_credentials.js
 
 // Reads previously authorized credentials from the save file.
 
-async function loadSavedCredentialsIfExist() {
+export async function loadSavedCredentialsIfExist() {
 	try {
 		const content = await fs.readFile(TOKEN_PATH);
 		const credentials = JSON.parse(content);
@@ -24,7 +25,7 @@ async function loadSavedCredentialsIfExist() {
 }
 
 // Serializes credentials to a file compatible with GoogleAUth.fromJSON.
-async function saveCredentials(client) {
+export async function saveCredentials(client) {
 	const content = await fs.readFile(CREDENTIALS_PATH);
 	const keys = JSON.parse(content);
 	const key = keys.installed || keys.web;
@@ -41,7 +42,7 @@ async function saveCredentials(client) {
  * Load or request or authorization to call APIs.
  *
  */
-async function authorize() {
+export async function authorize() {
 	let client = await loadSavedCredentialsIfExist();
 	if (client) {
 		console.log("client === true");
@@ -60,7 +61,7 @@ async function authorize() {
 /**
  * Lists the next 10 events on the user's primary calendar.
  */
-async function listEvents(auth) {
+export async function listEvents(auth) {
 	const calendar = google.calendar({ version: "v3", auth });
 	const res = await calendar.events.list({
 		calendarId: "primary",
@@ -75,10 +76,20 @@ async function listEvents(auth) {
 		return;
 	}
 	console.log("Upcoming 10 events:");
+	// eslint-disable-next-line no-unused-vars
 	events.map((event, i) => {
 		const start = event.start.dateTime || event.start.date;
 		console.log(`${start} - ${event.summary}`);
 	});
 }
 
-authorize().then(listEvents).catch(console.error);
+export function reqest(event) {
+	console.log("hm");
+	if (event === "list") {
+		authorize().then(listEvents).catch(console.error);
+		console.log("list-event");
+	} else if (event === "add-event") {
+		console.log("add-event");
+		// authorize().then(listEvents).catch(console.error);
+	}
+}
