@@ -28,6 +28,28 @@ export function formatTime(string) {
 export function getTimezone() {
 	return dayjs.tz.guess();
 }
+function parseHours(time) {
+	return parseInt(time.split(":", 1)[0]);
+}
+function parseMinutes(time) {
+	return time.split(":")[1];
+}
+function validateTime(hour, minutes) {
+	let str;
+	console.log(hour, minutes);
+	minutes = minutes.toLowerCase();
+	if (minutes.endsWith("pm") || minutes.endsWith("p")) {
+		str = minutes.endsWith("pm") ? "pm" : "p";
+		hour = hour + 12;
+	} else if (minutes.endsWith("am") || minutes.endsWith("a")) {
+		str = minutes.endsWith("am") ? "am" : "a";
+	}
+	if (hour > 23) {
+		hour = 0;
+	}
+	minutes = parseInt(minutes.split(str, 1)[0]);
+	return [hour, minutes];
+}
 export function parseDate(string) {
 	let time, date, month, day, year, hour, minutes, formattedDate;
 	const isTimeStr = (str) => str.indexOf(":") !== -1;
@@ -49,10 +71,13 @@ export function parseDate(string) {
 		split = timeIndex > 0 ? split.reverse() : split;
 	}
 	time = split[0];
+	hour = parseHours(time); // Type === Number
+	minutes = parseMinutes(time); // Type === String
+	console.log(minutes);
+	[hour, minutes] = validateTime(hour, minutes);
 	date = split[1];
 	// split time into hours and minutes
-	hour = time.split(":")[0];
-	minutes = time.split(":")[1];
+	// minutes = time.split(":")[1];
 	// split date into month and day and possibly year
 	date = date.split("/");
 	month = date[0];
@@ -64,7 +89,7 @@ export function parseDate(string) {
 	try {
 		// convert String to Number
 		minutes = parseInt(minutes);
-		hour = parseInt(hour);
+		// hour = parseInt(hour);
 		day = parseInt(day);
 		month = parseInt(month) - 1;
 	} catch (error) {
@@ -81,7 +106,3 @@ export function parseDate(string) {
 		console.log(`Daysjs date parsing error ${error}`);
 	}
 }
-
-function parseTimeFirst() {}
-function parseDateFirst() {}
-function check24HourClock(time) {}
