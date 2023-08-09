@@ -6,6 +6,7 @@ import utc from "dayjs/plugin/utc.js";
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
+const isEmpty = (index) => index !== "" && index !== " " && typeof index !== "undefined" && index;
 export function formatDate(string) {
 	let date, time, formattedDate;
 	if (string.indexOf(":") !== -1) {
@@ -29,38 +30,58 @@ export function getTimezone() {
 }
 export function parseDate(string) {
 	let time, date, month, day, year, hour, minutes, formattedDate;
-	if (string.indexOf(" ") !== -1) {
-		if (string.indexOf(":") !== -1) {
-			// split date and time
-			time = string.split(" ")[0];
-			date = string.split(" ")[1];
-			// split hours and minutes
-			hour = time.split(":")[0];
-			minutes = time.split(":")[1];
-			// split month and day
-			month = date.split("/")[0];
-			day = date.split("/")[1];
-			// TODO: add year changing
-			try {
-				let possibleYear = date.split("/")[2];
-				year = possibleYear !== undefined ? possibleYear : dayjs().year();
-				year = year.length === 2 ? `20${year}` : year;
-				// convert String to Number
-				month = parseInt(month) - 1;
-				day = parseInt(day);
-				minutes = parseInt(minutes);
-				hour = parseInt(hour);
-			} catch (error) {
-				console.log(`date parsing error ${error}`);
-			}
-			let d = new Date();
-			formattedDate = dayjs(d);
-			// 12 hour === h
-			console.log(day);
-			formattedDate = formattedDate.set("years", year).set("month", month).set("D", day).set("hours", hour).set("minute", minutes);
-			console.log(formattedDate);
-		}
+	const isTimeStr = (str) => str.indexOf(":") !== -1;
+
+	if (string.indexOf(" ") === -1 || string.indexOf(":") === -1) return;
+	// split date and time
+	let split = string.split(" ");
+	console.log(split);
+	// remove whitespace
+	split = split.map((element) => element.trim());
+	// checks for empty indicies
+	split = split.filter(isEmpty);
+	console.log(split);
+	if (split.length === 2) {
+		// index that has a colon ':' indicates a time.
+		// reverses array if the first index does not contain a colon ':'
+		let timeIndex = split.findIndex(isTimeStr);
+		console.log(timeIndex);
+		split = timeIndex > 0 ? split.reverse() : split;
 	}
-	console.log(formattedDate.toISOString());
-	return formattedDate.toISOString();
+	time = split[0];
+	date = split[1];
+	// split time into hours and minutes
+	hour = time.split(":")[0];
+	minutes = time.split(":")[1];
+	// split date into month and day and possibly year
+	date = date.split("/");
+	month = date[0];
+	day = date[1];
+	year = date.length > 2 ? date[2] : dayjs().year();
+	// add full year if abbreviated
+	year = year.length === 2 ? `20${year}` : year;
+	console.log(year, month, day, hour, minutes);
+	try {
+		// convert String to Number
+		minutes = parseInt(minutes);
+		hour = parseInt(hour);
+		day = parseInt(day);
+		month = parseInt(month) - 1;
+	} catch (error) {
+		console.log(`Integer parsing error ${error}`);
+	}
+	let d = new Date();
+	formattedDate = dayjs(d);
+	console.log(year, month, day, hour, minutes);
+	try {
+		formattedDate = formattedDate.set("years", year).set("month", month).set("D", day).set("hours", hour).set("minute", minutes);
+		console.log(formattedDate);
+		return formattedDate.toISOString();
+	} catch (error) {
+		console.log(`Daysjs date parsing error ${error}`);
+	}
 }
+
+function parseTimeFirst() {}
+function parseDateFirst() {}
+function check24HourClock(time) {}
