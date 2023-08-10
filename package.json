@@ -4,6 +4,9 @@
 	"description": "Node js cli tool allows you to manage google calendar from the command line",
 	"type": "module",
 	"main": "index.js",
+	"bin": {
+		"gcal": "./src/index.js"
+	},
 	"scripts": {
 		"dev": "nodemon ./src/index.js"
 	},

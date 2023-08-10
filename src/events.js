@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 import { createSpinner } from "nanospinner";
 import { formatDate, getTimezone } from "./dates.js";
-import { auth } from "./index.js";
+import { auth } from "./googleauth.js";
 const calendar = google.calendar({ version: "v3", auth });
 
 export async function listEvents(num) {

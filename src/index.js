@@ -1,79 +1,41 @@
-import { authenticate } from "@google-cloud/local-auth";
-import fs from "fs/promises";
-import { google } from "googleapis";
-import path from "path";
-import process from "process";
-
-const SCOPES = ["https://www.googleapis.com/auth/calendar"];
-// The file token.json stores the user's access and refresh tokens, and is
-// created automatically when the authorization flow completes for the first time.
-const TOKEN_PATH = path.join(process.cwd(), "token.json");
-const CREDENTIALS_PATH = path.join(process.cwd(), "desktop_client_credentials.json");
-
-// Reads previously authorized credentials from the save file.
-
-async function loadSavedCredentialsIfExist() {
-	try {
-		const content = await fs.readFile(TOKEN_PATH);
-		const credentials = JSON.parse(content);
-		return google.auth.fromJSON(credentials);
-	} catch (error) {
-		console.log(`credential load error ${error}`);
-		return null;
-	}
-}
-
-// Serializes credentials to a file compatible with GoogleAUth.fromJSON.
-async function saveCredentials(client) {
-	const content = await fs.readFile(CREDENTIALS_PATH);
-	const keys = JSON.parse(content);
-	const key = keys.installed || keys.web;
-	const payload = JSON.stringify({
-		type: "authorized_user",
-		client_id: key.client_id,
-		client_secret: key.client_secret,
-		refresh_token: client.credentials.refresh_token,
+#!/usr/bin/env node
+import { Command } from "commander";
+import dayjs from "dayjs";
+import { parseDate } from "./dates.js";
+import { addEvents, listCalendars, listEvents } from "./events.js";
+const program = new Command();
+program.name("google-calendar-cli").description("CLI for google calendar").version("0.0.1");
+program
+	.command("add-event")
+	.alias("ae")
+	.description("Add calendar event")
+	.argument("[string]", "event title string", "none")
+	.requiredOption("-id, --calendarid <string>", "calendar ID", "primary")
+	.option("-d, --description <string>", "the description content")
+	.requiredOption("-s, --start <string>", "event start time", dayjs(new Date()).add(1, "hours").toISOString())
+	.requiredOption("-e, --end <string>", "event end time", dayjs(new Date()).add(2, "hours").toISOString())
+	.action((summary, options) => {
+		console.log(summary, options.calendarid, options.description, parseDate(options.start), parseDate(options.end));
+		addEvents(summary, options.calendarid, options.description, parseDate(options.start), parseDate(options.end));
 	});
-	await fs.writeFile(TOKEN_PATH, payload);
-}
 
-/**
- * Load or request or authorization to call APIs.
- *
- */
-async function authorize() {
-	let client = await loadSavedCredentialsIfExist();
-	if (client) {
-		return client;
-	}
-	client = await authenticate({
-		scopes: SCOPES,
-		keyfilePath: CREDENTIALS_PATH,
+program
+	.command("list-events")
+	.alias("le")
+	.description("list events")
+	.argument("[number]", "number of events to list", "10")
+	.option("-t, --today", "list current day events")
+	.option("-w, --week", "list events for the next week")
+	.action((number) => {
+		const num = number !== undefined || number !== null ? number : 10;
+		listEvents(num);
 	});
-	if (client.credentials) {
-		await saveCredentials(client);
-	}
-	return client;
-}
 
-/**
- * Lists the next 10 events on the user's primary calendar.
- */
-export const auth = await authorize();
-// global credentials
-
-// export async function reqest(type, num) {
-// 	// let auth;
-// 	// try {
-// 	// 	auth = await authorize();
-// 	// } catch (error) {
-// 	// 	console.log(`event list request error ${error}`);
-// 	// }
-// 	console.log("hm");
-// 	if (type === "list") {
-// 		console.log("list-event");
-// 	} else if (type === "add-event") {
-// 		console.log("add-event");
-// 		// authorize().then(listEvents).catch(console.error);
-// 	}
-// }
+program
+	.command("list-calendars")
+	.alias("lc")
+	.description("list calendars ID's")
+	.action(() => {
+		listCalendars();
+	});
+program.parse(process.argv);
