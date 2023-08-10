@@ -37,10 +37,10 @@ export async function listEvents(num) {
 	}
 }
 
-export async function addEvents(summary, description, timeStart, timeEnd) {
+export async function addEvents(summary, calendarId, description, timeStart, timeEnd) {
 	const spinner = createSpinner().start();
 	await calendar.events.insert({
-		calendarId: "primary",
+		calendarId: calendarId,
 		auth: auth,
 		requestBody: {
 			summary: summary,
@@ -56,4 +56,29 @@ export async function addEvents(summary, description, timeStart, timeEnd) {
 		},
 	});
 	spinner.success();
+}
+export async function listCalendars() {
+	if (!auth) {
+		return;
+	}
+	const spinner = createSpinner().start();
+	// creates spinner in console
+	try {
+		const res = await calendar.calendarList.list({
+			auth: auth,
+		});
+		const calendarList = res.data.items;
+		spinner.success();
+		// stops spinner
+		if (!calendarList || calendarList.length === 0) {
+			console.log("No calendar ID's found.");
+			return;
+		}
+		// eslint-disable-next-line no-unused-vars
+		calendarList.map((calID, i) => {
+			console.log(calID);
+		});
+	} catch (error) {
+		console.log(`Calendar list API error ${error}`);
+	}
 }
