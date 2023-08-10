@@ -41,6 +41,8 @@ function checkAmPm(string) {
 		return "pm";
 	} else if (string.endsWith("am") || string.endsWith("a")) {
 		return "am";
+	} else {
+		return false;
 	}
 }
 function parseAm(time) {
@@ -86,7 +88,6 @@ function handleTime(time) {
 	minutes = parseInt(minutes.split(str, 1)[0]);
 	return [hour, minutes];
 }
-
 export function parseDate(string) {
 	let time, date, month, day, year, hour, minutes, formattedDate;
 	// date delimited by '/' or '-'
@@ -101,7 +102,24 @@ export function parseDate(string) {
 	// checks for empty indicies
 	split = split.filter(isEmpty);
 	console.log(split);
-	if (split.length !== 2) {
+
+	if (split.length === 3) {
+		let arr = [];
+		if (checkAmPm(split[2]) === false && checkAmPm(split[1]) === false) return;
+		let temp = split.findIndex((element) => checkAmPm(element) === "am" || checkAmPm(element) === "pm");
+		console.log(temp);
+		for (let i = 0; i < split.length; i++) {
+			if (i === temp) {
+				continue;
+			} else if (i === temp - 1) {
+				arr.push(split[i].concat(split[temp]));
+			} else {
+				arr.push(split[i]);
+			}
+		}
+		split = arr;
+		console.log(split);
+	} else if (split.length !== 2) {
 		throw new Error("Argument must provide both Date and Time, separated by a space");
 	}
 	// index that has a colon ':' indicates a time.
