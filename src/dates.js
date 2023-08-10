@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
+import { parse } from "dotenv";
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -34,40 +35,58 @@ function parseHours(time) {
 function parseMinutes(time) {
 	return time.split(":")[1];
 }
-function validateTime(time) {
+function checkAmPm(string) {
+	string = string.toLowerCase();
+	if (string.endsWith("pm") || string.endsWith("p")) {
+		return "pm";
+	} else if (string.endsWith("am") || string.endsWith("a")) {
+		return "am";
+	}
+}
+function parseAm(time) {
+	let str = time.endsWith("am") ? "am" : "a";
+	let h = parseInt(time.split(str)[0]);
+	return h + 12 > 23 ? 0 : h + 12;
+}
+function parsePm(time) {
+	let str = time.endsWith("pm") ? "pm" : "p";
+	let h = parseInt(time.split(str)[0]);
+	return h + 12 > 23 ? 0 : h + 12;
+}
+function handleNoMinutes(time) {
 	let hour, minutes;
-	let str;
-	// split time into hours and minutes
+	time = time.toLowerCase();
+	if (checkAmPm(time) === "pm") {
+		hour = parsePm(time);
+	} else if (checkAmPm(time) === "am") {
+		hour = parseAm(time);
+	}
+	minutes = 0;
+	console.log(hour, minutes);
+	return [hour, minutes];
+}
+function handleTime(time) {
+	let hour, minutes, str;
 	// if no minutes are given
-	// console.log(time);
 	if (time.indexOf(":") === -1) {
-		if (time.endsWith("pm") || time.endsWith("p")) {
-			str = time.endsWith("pm") ? "pm" : "p";
-			hour = parseInt(time.split(str)[0]);
-			hour = hour + 12 > 23 ? 0 : hour + 12;
-		} else if (time.endsWith("am") || time.endsWith("a")) {
-			str = time.endsWith("am") ? "am" : "a";
-			hour = parseInt(time.split(str)[0]);
-		}
-		minutes = 0;
-		console.log(hour, minutes);
-		return [hour, minutes];
+		return handleNoMinutes(time);
 	}
 	hour = parseHours(time); // Type === Number
 	minutes = parseMinutes(time); // Type === String
 
 	console.log(hour, minutes);
+
 	minutes = minutes.toLowerCase();
-	if (minutes.endsWith("pm") || minutes.endsWith("p")) {
+	if (checkAmPm(minutes) === "pm") {
 		str = minutes.endsWith("pm") ? "pm" : "p";
 		hour = hour + 12 > 23 ? 0 : hour + 12;
-	} else if (minutes.endsWith("am") || minutes.endsWith("a")) {
+	} else if (checkAmPm(minutes) === "am") {
 		str = minutes.endsWith("am") ? "am" : "a";
 	}
-
 	minutes = parseInt(minutes.split(str, 1)[0]);
 	return [hour, minutes];
 }
+
 export function parseDate(string) {
 	let time, date, month, day, year, hour, minutes, formattedDate;
 	// date delimited by '/' or '-'
@@ -83,7 +102,6 @@ export function parseDate(string) {
 	split = split.filter(isEmpty);
 	console.log(split);
 	if (split.length !== 2) {
-		// console.log("");
 		throw new Error("Argument must provide both Date and Time, separated by a space");
 	}
 	// index that has a colon ':' indicates a time.
@@ -95,7 +113,7 @@ export function parseDate(string) {
 	console.log(minutes);
 	time = split[0];
 	date = split[1];
-	[hour, minutes] = validateTime(time);
+	[hour, minutes] = handleTime(time);
 
 	// split date into month and day and possibly year
 	date = date.split("/");
