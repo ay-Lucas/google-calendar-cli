@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import dayjs from "dayjs";
+import { listCalendars, writeCalendarIDFile } from "./calendar.js";
 import { parseDate } from "./dates.js";
-import { addEvents, listCalendars, listEvents, writeCalendarIDFile } from "./events.js";
+import { addEvents, listEvents } from "./events.js";
 const program = new Command();
 program.name("google-calendar-cli").description("CLI for google calendar").version("0.0.1");
 program
