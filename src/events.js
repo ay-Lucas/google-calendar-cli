@@ -1,3 +1,4 @@
+import chalk from "chalk";
 import { createSpinner } from "nanospinner";
 import { calendar, calendarNameToId } from "./calendar.js";
 import { formatDate, getTimezone } from "./dates.js";
@@ -7,6 +8,7 @@ export async function listEvents(num, calendarName) {
 		return;
 	}
 	const spinner = createSpinner().start(); // creates spinner in console
+
 	try {
 		const res = await calendar.events.list({
 			calendarId: await calendarNameToId(calendarName),
@@ -18,6 +20,7 @@ export async function listEvents(num, calendarName) {
 		const events = res.data.items;
 		// stops spinner
 		spinner.success();
+		console.log(chalk.green(calendarName) + ":");
 		if (!events || events.length === 0) {
 			console.log("No upcoming events found.");
 			return;

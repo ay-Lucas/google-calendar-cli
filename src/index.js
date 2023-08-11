@@ -1,11 +1,33 @@
 #!/usr/bin/env node
-import { Command } from "commander";
+import { Argument, Command, Option } from "commander";
 import dayjs from "dayjs";
-import { listCalendars, writeCalendarIDFile } from "./calendar.js";
+import { getCalendarNames, listCalendarNames, listCalendars, writeCalendarIDFile } from "./calendar.js";
 import { parseDate } from "./dates.js";
 import { addEvents, listEvents } from "./events.js";
+const calNames = await getCalendarNames();
+const typeChoices = ["events", "calendars", "calendar-names"].concat(calNames);
+
 const program = new Command();
 program.name("google-calendar-cli").description("CLI for google calendar").version("0.0.1");
+
+program
+	.command("list")
+	.alias("ls")
+	.description("list google calendar events by default or calendars with ' -c ' flag")
+	.addArgument(new Argument("[calName]", "the calendar to list from").choices(typeChoices).default("primary"))
+	.option("-n, --number <number>", "number of items to list", 10)
+	.option("-c --calendar-names", "list all of your calendar names")
+	.option("-C, --calendars", "list an array of calendar objects")
+	.action(async (calName, options) => {
+		console.log(calName, options.number, options.calendars, options.calendarnames);
+		calName = calName.toLowerCase();
+		if (calName === "calendars") listCalendars();
+		else if (calName === "calendar-names") listCalendarNames();
+		else if (calName === "events") listEvents(options.number, calName);
+		else if (options.calendars) listCalendars();
+		else if (options.calendarnames) listCalendarNames();
+		else listEvents(options.number, calName);
+	});
 program
 	.command("add-event")
 	.alias("ae")
@@ -18,29 +40,6 @@ program
 	.action((summary, options) => {
 		console.log(summary, options.calendar, options.description, parseDate(options.start), parseDate(options.end));
 		addEvents(summary, options.calendar, options.description, parseDate(options.start), parseDate(options.end));
-	});
-
-program
-	.command("list-events")
-	.alias("le")
-	.description("list events")
-	.argument("[number]", "number of events to list", 10)
-	.option("-c, --calendar <string>", "calendar name", "primary")
-	.option("-t, --today", "list current day events")
-	.option("-w, --week", "list events for the next week")
-	.action((num, options) => {
-		// const num = options.n !== undefined || options.n !== null ? options.n : 10;
-		if (num === null || num === undefined) num = 10;
-		console.log(num, options.calendar);
-		listEvents(num, options.calendar);
-	});
-//TODO: ls command with event and calendar options
-program
-	.command("list-calendars")
-	.alias("lc")
-	.description("list calendars ID's")
-	.action(() => {
-		listCalendars();
 	});
 
 program

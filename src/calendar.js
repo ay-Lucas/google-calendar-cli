@@ -1,14 +1,19 @@
+import chalk from "chalk";
 import fsPromise from "fs/promises";
 import { google } from "googleapis";
+import { createSpinner } from "nanospinner";
 import path from "path";
 import { fileURLToPath } from "url";
 import { auth } from "./googleauth.js";
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const CALINFO_PATH = path.join(__dirname, "calInfo.json");
+
 export const calendar = google.calendar({ version: "v3", auth });
 
+export async function calendarNameToId(calendarName) {
+	return calendarName !== "primary" ? await getCalID(calendarName) : calendarName;
+}
 export async function listCalendars() {
 	if (!auth) {
 		return;
@@ -34,23 +39,6 @@ export async function listCalendars() {
 		console.log(`Calendar list API error ${error}`);
 	}
 }
-
-export async function calendarNameToId(calendarName) {
-	return calendarName !== "primary" ? await getCalID(calendarName) : calendarName;
-}
-
-// async function getCalendarData(calendarProperty) {
-// 	const info = await fsPromise.readFile(CALINFO_PATH);
-// 	const data = JSON.parse(info);
-// 	// console.log(data);
-// 	console.log("calendar name: " + calendarName);
-// 	data.forEach((calendar) => {
-// 		if (calendarName.toLowerCase() === calendar.summary.toLowerCase()) {
-// 			id = calendar.id;
-// 			return;
-// 		}
-// 	});
-// }
 
 export async function writeCalendarIDFile() {
 	if (!auth || !doesCalInfoExist()) {
@@ -79,18 +67,40 @@ function doesCalInfoExist() {
 		return null;
 	}
 }
+
 async function getCalID(calendarName) {
 	let id;
 	const info = await fsPromise.readFile(CALINFO_PATH);
 	const data = JSON.parse(info);
 	// console.log(data);
-	console.log("calendar name: " + calendarName);
 	data.forEach((calendar) => {
 		if (calendarName.toLowerCase() === calendar.summary.toLowerCase()) {
 			id = calendar.id;
 			return;
 		}
 	});
-	console.log(id);
 	return id;
+}
+
+export async function getCalendarNames() {
+	let arr = [];
+	try {
+		const info = await fsPromise.readFile(CALINFO_PATH);
+		const calendarData = JSON.parse(info);
+		calendarData.forEach((calendar) => {
+			arr.push(calendar.summary);
+		});
+	} catch (error) {
+		console.log(error);
+	}
+	for (let i = 0; i < arr.length; i++) {
+		arr[i] = arr[i].toLowerCase();
+	}
+
+	return arr;
+}
+export async function listCalendarNames() {
+	const names = await getCalendarNames();
+	console.log(`(${chalk.cyan(names.length)}) Calendar Names: \n`);
+	names.forEach((calendar) => console.log(chalk.blueBright(`- ${calendar}`)));
 }
