@@ -1,8 +1,7 @@
 import { authenticate } from "@google-cloud/local-auth";
-import fs from "fs/promises";
+import fsPromise from "fs/promises";
 import { google } from "googleapis";
-import path, { dirname } from "path";
-import process from "process";
+import path from "path";
 import { fileURLToPath } from "url";
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
@@ -17,7 +16,7 @@ const CREDENTIALS_PATH = path.join(__dirname, "desktop_client_credentials.json")
 
 async function loadSavedCredentialsIfExist() {
 	try {
-		const content = await fs.readFile(TOKEN_PATH);
+		const content = await fsPromise.readFile(TOKEN_PATH);
 		const credentials = JSON.parse(content);
 		return google.auth.fromJSON(credentials);
 	} catch (error) {
@@ -28,7 +27,7 @@ async function loadSavedCredentialsIfExist() {
 
 // Serializes credentials to a file compatible with GoogleAUth.fromJSON.
 async function saveCredentials(client) {
-	const content = await fs.readFile(CREDENTIALS_PATH);
+	const content = await fsPromise.readFile(CREDENTIALS_PATH);
 	const keys = JSON.parse(content);
 	const key = keys.installed || keys.web;
 	const payload = JSON.stringify({
@@ -37,7 +36,7 @@ async function saveCredentials(client) {
 		client_secret: key.client_secret,
 		refresh_token: client.credentials.refresh_token,
 	});
-	await fs.writeFile(TOKEN_PATH, payload);
+	await fsPromise.writeFile(TOKEN_PATH, payload);
 }
 
 /**
@@ -58,25 +57,8 @@ async function authorize() {
 	}
 	return client;
 }
-
 /**
  * Lists the next 10 events on the user's primary calendar.
  */
 export const auth = await authorize();
 // global credentials
-
-// export async function reqest(type, num) {
-// 	// let auth;
-// 	// try {
-// 	// 	auth = await authorize();
-// 	// } catch (error) {
-// 	// 	console.log(`event list request error ${error}`);
-// 	// }
-// 	console.log("hm");
-// 	if (type === "list") {
-// 		console.log("list-event");
-// 	} else if (type === "add-event") {
-// 		console.log("add-event");
-// 		// authorize().then(listEvents).catch(console.error);
-// 	}
-// }
