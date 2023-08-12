@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { createSpinner } from "nanospinner";
 import { calendar, calendarNameToId } from "./calendar.js";
-import { formatDate, getTimezone } from "./dates.js";
+import { formatEventDateTime, getTimezone } from "./dates.js";
 import { auth } from "./googleauth.js";
 export async function listEvents(num, calendarName) {
 	if (!auth) {
@@ -25,11 +25,12 @@ export async function listEvents(num, calendarName) {
 			console.log("No upcoming events found.");
 			return;
 		}
+
 		// eslint-disable-next-line no-unused-vars
 		events.map((event, i) => {
 			const start = event.start.dateTime || event.start.date;
-			// console.log(start);
-			console.log(`${formatDate(start)} - ${event.summary}`);
+			const end = event.end.dateTime || event.end.date;
+			console.log(`${formatEventDateTime(start, end)} - ${event.summary}\n `);
 		});
 	} catch (error) {
 		spinner.error();

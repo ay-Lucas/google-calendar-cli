@@ -23,7 +23,7 @@ program
 		calName = calName.toLowerCase();
 		if (calName === "calendars") listCalendars();
 		else if (calName === "calendar-names") listCalendarNames();
-		else if (calName === "events") listEvents(options.number, calName);
+		else if (calName === "events") listEvents(options.number, "primary");
 		else if (options.calendars) listCalendars();
 		else if (options.calendarnames) listCalendarNames();
 		else listEvents(options.number, calName);

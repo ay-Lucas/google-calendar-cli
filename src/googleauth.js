@@ -4,7 +4,7 @@ import { google } from "googleapis";
 import path from "path";
 import { fileURLToPath } from "url";
 
-const SCOPES = ["https://www.googleapis.com/auth/calendar"];
+const SCOPES = ["https://www.googleapis.com/auth/calendar", "https://www.googleapis.com/auth/calendar.events"];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first time.
 const __filename = fileURLToPath(import.meta.url);

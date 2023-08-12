@@ -8,19 +8,29 @@ dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 const isEmpty = (index) => index !== "" && index !== " " && typeof index !== "undefined" && index;
-export function formatDate(string) {
+export function formatEventDateTime(start, end) {
 	let date, time, formattedDate;
-	if (string.indexOf(":") !== -1) {
-		let split = string.split(":", 1);
-		date = dayjs(split[0]).format("ddd M/D");
-		time = dayjs(split[1]).format("h:mm a");
-		formattedDate = `${chalk.cyan(date)} ${chalk.green(time)}`;
-		// formattedDate = chalk.cyan(date.format("ddd M/D h:mm a"));
-	} else {
-		let dayjsObj = dayjs(string);
-		formattedDate = `${chalk.cyan(dayjsObj.format("ddd M/D"))}`;
+	let last;
+	let arr = [start, end];
+	let formattedDates = [];
+	for (let i = 0; i < arr.length; i++) {
+		let ohno = dayjs(arr[i]).format("M/D dddd|h:mm a");
+		let split = ohno.split("|", 2);
+		date = split[0];
+		time = split[1];
+		if (i === 0) {
+			formattedDate = `${chalk.bgGrey(date)}\n ${chalk.green(time)}`;
+		} else {
+			formattedDate = `${chalk.green(time)}`;
+		}
+		if (last === time) {
+			formattedDates = `${chalk.bgGrey(date)}`;
+		} else {
+			formattedDates.push(formattedDate);
+			last = time;
+		}
 	}
-	return formattedDate;
+	return typeof formattedDates === "object" ? formattedDates.join(" - ") : formattedDates;
 }
 export function formatTime(string) {
 	let formattedDate = dayjs(string);
