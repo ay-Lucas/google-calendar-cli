@@ -19,7 +19,7 @@ program
 	.option("-C --calendar_objects", "list an array of calendar objects")
 	.option("-c, --calendars", "list of your calendar names")
 	.action(async (calName, options) => {
-		console.log(calName, options.number, options.calendars, options.calendar_objects);
+		// console.log(calName, options.number, options.calendars, options.calendar_objects);
 		calName = calName.toLowerCase();
 		if (calName === "calendars" || options.calendars) listCalendarNames();
 		else if (calName === "events") listEvents(options.number, "primary");
@@ -37,16 +37,14 @@ program
 	.action(async (calName, title, options) => {
 		calName = calName.toLowerCase();
 		const calendar = calNames.find((name) => calName === name);
-		console.log(calName, title, options.description, parseDate(options.start), parseDate(options.end));
+		// console.log(calName, title, options.description, parseDate(options.start), parseDate(options.end));
 		if (calendar !== undefined) {
 			calName = calendar;
 		} else {
 			title = calName;
 			calName = "primary";
 		}
-		// console.log(calName, title, options.description, parseDate(options.start), parseDate(options.end));
 		addEvents(calName, title, options.description, parseDate(options.start), parseDate(options.end));
-		// console.log(`event successfully added ${(calName, title, parseDate(options.start), parseDate(options.end))}`);
 	});
 
 program

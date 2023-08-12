@@ -16,7 +16,7 @@ And you're done
 -   Add events from specific calendars with `gcal add <calendarName>`
 
 -   List events from a specific calendar with `gcal list <calendarName>`
-    -   Use `-n [number]` flag to indicate the number of events to list
+-   Use `-n [number]` flag to indicate the number of events to list
 
 ## Calendars
 
