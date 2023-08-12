@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { Argument, Command, Option } from "commander";
+import { Argument, Command } from "commander";
 import dayjs from "dayjs";
 import { getCalendarNames, listCalendarNames, listCalendars, writeCalendarIDFile } from "./calendar.js";
 import { parseDate } from "./dates.js";
@@ -16,10 +16,10 @@ program
 	.description("list google calendar events by default or calendars with ' -c ' flag")
 	.addArgument(new Argument("[calName]", "the calendar to list from").choices(typeChoices).default("primary"))
 	.option("-n, --number <number>", "number of items to list", 10)
-	.option("-c --calendar-names", "list all of your calendar names")
+	.option("-c --calendar-names", "list of your calendar names")
 	.option("-C, --calendars", "list an array of calendar objects")
 	.action(async (calName, options) => {
-		console.log(calName, options.number, options.calendars, options.calendarnames);
+		// console.log(calName, options.number, options.calendars, options.calendarnames);
 		calName = calName.toLowerCase();
 		if (calName === "calendars") listCalendars();
 		else if (calName === "calendar-names") listCalendarNames();
@@ -29,9 +29,8 @@ program
 		else listEvents(options.number, calName);
 	});
 program
-	.command("add-event")
-	.alias("ae")
-	.description("Add calendar event")
+	.command("add")
+	.description("add calendar event")
 	.argument("[string]", "event title string", "none")
 	.requiredOption("-c, --calendar <string>", "calendar name", "primary")
 	.option("-d, --description <string>", "the description content")
@@ -48,5 +47,4 @@ program
 	.action(() => {
 		writeCalendarIDFile();
 	});
-
 program.parse(process.argv);

@@ -16,11 +16,12 @@ export async function listEvents(num, calendarName) {
 			maxResults: num,
 			singleEvents: true,
 			orderBy: "startTime",
+			// timeMax:
 		});
 		const events = res.data.items;
 		// stops spinner
 		spinner.success();
-		console.log(chalk.green(calendarName) + ":");
+		console.log(`${chalk.green(calendarName)}:\n`);
 		if (!events || events.length === 0) {
 			console.log("No upcoming events found.");
 			return;
