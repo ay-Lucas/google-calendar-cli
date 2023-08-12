@@ -5,7 +5,7 @@ import { getCalendarNames, listCalendarNames, listCalendars, writeCalendarIDFile
 import { parseDate } from "./dates.js";
 import { addEvents, listEvents } from "./events.js";
 const calNames = await getCalendarNames();
-const typeChoices = ["events", "calendars", "calendar-names"].concat(calNames);
+const typeChoices = ["events", "calendars", "calendar-objects"].concat(calNames);
 
 const program = new Command();
 program.name("google-calendar-cli").description("CLI for google calendar").version("0.0.1");
@@ -13,32 +13,40 @@ program.name("google-calendar-cli").description("CLI for google calendar").versi
 program
 	.command("list")
 	.alias("ls")
-	.description("list google calendar events by default or calendars with ' -c ' flag")
+	.description("list google calendar events by default or calendars with ' -C ' flag or `list [calName]")
 	.addArgument(new Argument("[calName]", "the calendar to list from").choices(typeChoices).default("primary"))
 	.option("-n, --number <number>", "number of items to list", 10)
-	.option("-c --calendar-names", "list of your calendar names")
-	.option("-C, --calendars", "list an array of calendar objects")
+	.option("-C --calendar_objects", "list an array of calendar objects")
+	.option("-c, --calendars", "list of your calendar names")
 	.action(async (calName, options) => {
-		// console.log(calName, options.number, options.calendars, options.calendarnames);
+		console.log(calName, options.number, options.calendars, options.calendar_objects);
 		calName = calName.toLowerCase();
-		if (calName === "calendars") listCalendars();
-		else if (calName === "calendar-names") listCalendarNames();
+		if (calName === "calendars" || options.calendars) listCalendarNames();
 		else if (calName === "events") listEvents(options.number, "primary");
-		else if (options.calendars) listCalendars();
-		else if (options.calendarnames) listCalendarNames();
+		else if (calName === "calendar-objects" || options.calendar_objects) listCalendars();
 		else listEvents(options.number, calName);
 	});
 program
 	.command("add")
 	.description("add calendar event")
-	.argument("[string]", "event title string", "none")
-	.requiredOption("-c, --calendar <string>", "calendar name", "primary")
+	.addArgument(new Argument("[calName]", "the calendar to add an event to").default("primary"))
+	.addArgument(new Argument("[title]", "event title name").default("none"))
 	.option("-d, --description <string>", "the description content")
 	.requiredOption("-s, --start <string>", "event start time", dayjs(new Date()).add(1, "hours").toISOString())
 	.requiredOption("-e, --end <string>", "event end time", dayjs(new Date()).add(2, "hours").toISOString())
-	.action((summary, options) => {
-		console.log(summary, options.calendar, options.description, parseDate(options.start), parseDate(options.end));
-		addEvents(summary, options.calendar, options.description, parseDate(options.start), parseDate(options.end));
+	.action(async (calName, title, options) => {
+		calName = calName.toLowerCase();
+		const calendar = calNames.find((name) => calName === name);
+		console.log(calName, title, options.description, parseDate(options.start), parseDate(options.end));
+		if (calendar !== undefined) {
+			calName = calendar;
+		} else {
+			title = calName;
+			calName = "primary";
+		}
+		// console.log(calName, title, options.description, parseDate(options.start), parseDate(options.end));
+		addEvents(calName, title, options.description, parseDate(options.start), parseDate(options.end));
+		// console.log(`event successfully added ${(calName, title, parseDate(options.start), parseDate(options.end))}`);
 	});
 
 program

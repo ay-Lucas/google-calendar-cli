@@ -73,7 +73,6 @@ function handleNoMinutes(time) {
 		hour = parseAm(time);
 	}
 	minutes = 0;
-	console.log(hour, minutes);
 	return [hour, minutes];
 }
 function handleTime(time) {
@@ -84,8 +83,6 @@ function handleTime(time) {
 	}
 	hour = parseHours(time); // Type === Number
 	minutes = parseMinutes(time); // Type === String
-
-	console.log(hour, minutes);
 
 	minutes = minutes.toLowerCase();
 	if (checkAmPm(minutes) === "pm") {
@@ -105,18 +102,15 @@ export function parseDate(string) {
 	if (string.indexOf(" ") === -1) return;
 	// split date and time
 	let split = string.split(" ");
-	console.log(split);
 	// remove whitespace
 	split = split.map((element) => element.trim());
 	// checks for empty indicies
 	split = split.filter(isEmpty);
-	console.log(split);
-
 	if (split.length === 3) {
 		let arr = [];
 		if (checkAmPm(split[2]) === false && checkAmPm(split[1]) === false) return;
 		let temp = split.findIndex((element) => checkAmPm(element) === "am" || checkAmPm(element) === "pm");
-		console.log(temp);
+		// console.log(temp);
 		for (let i = 0; i < split.length; i++) {
 			if (i === temp) {
 				continue;
@@ -127,17 +121,14 @@ export function parseDate(string) {
 			}
 		}
 		split = arr;
-		console.log(split);
+		// console.log(split);
 	} else if (split.length !== 2) {
 		throw new Error("Argument must provide both Date and Time, separated by a space");
 	}
 	// index that has a colon ':' indicates a time.
 	// reverses array if the first index does not contain a colon ':'
 	let timeIndex = split.findIndex(isTimeStr);
-	console.log(timeIndex);
 	split = timeIndex > 0 ? split.reverse() : split;
-
-	console.log(minutes);
 	time = split[0];
 	date = split[1];
 	[hour, minutes] = handleTime(time);
@@ -149,15 +140,14 @@ export function parseDate(string) {
 	year = date.length > 2 ? date[2] : dayjs().year();
 	// add full year if abbreviated
 	year = year.length === 2 ? `20${year}` : year;
-	console.log(year, month, day, hour, minutes);
 	day = parseInt(day);
 	month = parseInt(month) - 1;
 	let d = new Date();
 	formattedDate = dayjs(d);
-	console.log(year, month, day, hour, minutes);
+	// console.log(year, month, day, hour, minutes);
 	try {
 		formattedDate = formattedDate.set("years", year).set("month", month).set("D", day).set("hours", hour).set("minute", minutes);
-		console.log(formattedDate);
+		// console.log(formattedDate);
 		return formattedDate.toISOString();
 	} catch (error) {
 		console.log(`Daysjs date parsing error ${error}`);

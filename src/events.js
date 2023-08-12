@@ -39,13 +39,13 @@ export async function listEvents(num, calendarName) {
 	}
 }
 
-export async function addEvents(summary, calendarName, description, timeStart, timeEnd) {
+export async function addEvents(calendarName, title, description, timeStart, timeEnd) {
 	const spinner = createSpinner().start();
 	await calendar.events.insert({
 		calendarId: await calendarNameToId(calendarName),
 		auth: auth,
 		requestBody: {
-			summary: summary,
+			summary: title,
 			description: description,
 			start: {
 				dateTime: timeStart,
@@ -58,4 +58,5 @@ export async function addEvents(summary, calendarName, description, timeStart, t
 		},
 	});
 	spinner.success();
+	console.log(`Event successfully added\n------------------------\n${formatEventDateTime(timeStart, timeEnd)} - ${(calendarName, title)}`);
 }
