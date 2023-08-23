@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import fs from "fs";
 import fsPromise from "fs/promises";
 import { google } from "googleapis";
 import { createSpinner } from "nanospinner";
@@ -41,9 +42,10 @@ export async function listCalendars() {
 }
 
 export async function writeCalendarIDFile() {
-	if (!auth || !doesCalInfoExist()) {
+	if (!auth || doesCalInfoExist()) {
 		return;
 	}
+
 	const spinner = createSpinner().start();
 	// creates spinner in console
 	try {
@@ -62,9 +64,13 @@ export async function writeCalendarIDFile() {
 	}
 }
 function doesCalInfoExist() {
-	if (fs.existsSync(CALINFO_PATH)) {
-		console.log("file already exists");
-		return null;
+	try {
+		if (fs.existsSync(CALINFO_PATH)) {
+			console.log("file already exists");
+			return null;
+		}
+	} catch (error) {
+		console.log(error);
 	}
 }
 
