@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 import { Argument, Command } from "commander";
 import dayjs from "dayjs";
-import { getCalendarNames, listCalendarNames, listCalendars, writeCalendarIDFile } from "./calendar.js";
+import { doesUserDataFileExist, getCalendarNames, listCalendarNames, listCalendars, writeCalendarIDFile } from "./calendar.js";
 import { parseDate } from "./dates.js";
 import { addEvents, listEvents } from "./events.js";
-const calNames = await getCalendarNames();
-const typeChoices = ["events", "calendars", "calendar-objects"].concat(calNames);
+import { listTaskLists, listTasks } from "./tasks.js";
+let calNames;
+if (doesUserDataFileExist()) {
+	calNames = await getCalendarNames();
+}
+const typeChoices = ["events", "calendars", "calendar-objects", "tasks", "task-lists"].concat(calNames);
 
 const program = new Command();
 program.name("google-calendar-cli").description("CLI for google calendar").version("0.0.1");
@@ -22,6 +26,8 @@ program
 		// console.log(calName, options.number, options.calendars, options.calendar_objects);
 		calName = calName.toLowerCase();
 		if (calName === "calendars" || options.calendars) listCalendarNames();
+		else if (calName === "tasks") listTasks();
+		else if (calName === "task-lists") listTaskLists();
 		else if (calName === "events") listEvents(options.number, "primary");
 		else if (calName === "calendar-objects" || options.calendar_objects) listCalendars();
 		else listEvents(options.number, calName);

@@ -8,7 +8,7 @@ import { fileURLToPath } from "url";
 import { auth } from "./googleauth.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const CALINFO_PATH = path.join(__dirname, "calInfo.json");
+const user_data = path.join(__dirname, "user_data.json");
 
 export const calendar = google.calendar({ version: "v3", auth });
 
@@ -40,12 +40,17 @@ export async function listCalendars() {
 		console.log(`Calendar list API error ${error}`);
 	}
 }
+// checks if user_data.json exists
+export function doesUserDataFileExist() {
+	return fs.existsSync(user_data);
+}
 
 export async function writeCalendarIDFile() {
-	if (!auth || doesCalInfoExist()) {
+	if (doesUserDataFileExist()) {
+		console.log("user data file already exists\n Google Calendar CLI is already setup!");
 		return;
 	}
-
+	console.log("saving user data..");
 	const spinner = createSpinner().start();
 	// creates spinner in console
 	try {
@@ -53,9 +58,9 @@ export async function writeCalendarIDFile() {
 			auth: auth,
 		});
 		const calendarList = res.data.items;
-		fs.writeFile(CALINFO_PATH, JSON.stringify(calendarList), (err) => {
+		fs.writeFile(user_data, JSON.stringify(calendarList), (err) => {
 			if (err) throw new Error("calendar list id write error");
-			console.log("calinfo.json done writing");
+			console.log("Google Calendar CLI is ready!");
 		});
 		// eslint-disable-next-line no-unused-vars
 		spinner.success();
@@ -63,20 +68,21 @@ export async function writeCalendarIDFile() {
 		console.log(`Calendar list API error ${error}`);
 	}
 }
-function doesCalInfoExist() {
-	try {
-		if (fs.existsSync(CALINFO_PATH)) {
-			console.log("file already exists");
-			return null;
-		}
-	} catch (error) {
-		console.log(error);
-	}
-}
+// function checkUserData() {
+// 	let exists;
+// 	if (fs.existsSync(user_data)) {
+// 		console.log("file exists");
+// 		exists = true;
+// 	} else {
+// 		exists = false;
+// 	}
+// 	return exists;
+// 	// console.log(`user_data file does not exist ${error}`);
+// }
 
 async function getCalID(calendarName) {
 	let id;
-	const info = await fsPromise.readFile(CALINFO_PATH);
+	const info = await fsPromise.readFile(user_data);
 	const data = JSON.parse(info);
 	// console.log(data);
 	data.forEach((calendar) => {
@@ -91,7 +97,7 @@ async function getCalID(calendarName) {
 export async function getCalendarNames() {
 	let arr = [];
 	try {
-		const info = await fsPromise.readFile(CALINFO_PATH);
+		const info = await fsPromise.readFile(user_data);
 		const calendarData = JSON.parse(info);
 		calendarData.forEach((calendar) => {
 			arr.push(calendar.summary);

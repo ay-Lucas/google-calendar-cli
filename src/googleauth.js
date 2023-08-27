@@ -1,10 +1,16 @@
 import { authenticate } from "@google-cloud/local-auth";
+import { existsSync } from "fs";
 import fsPromise from "fs/promises";
 import { google } from "googleapis";
+import { createSpinner } from "nanospinner";
 import path from "path";
 import { fileURLToPath } from "url";
-
-const SCOPES = ["https://www.googleapis.com/auth/calendar", "https://www.googleapis.com/auth/calendar.events"];
+const SCOPES = [
+	"https://www.googleapis.com/auth/calendar",
+	"https://www.googleapis.com/auth/calendar.events",
+	"https://www.googleapis.com/auth/tasks",
+	"https://www.googleapis.com/auth/tasks.readonly",
+];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first time.
 const __filename = fileURLToPath(import.meta.url);
@@ -15,6 +21,10 @@ const CREDENTIALS_PATH = path.join(__dirname, "desktop_client_credentials.json")
 // Reads previously authorized credentials from the save file.
 
 async function loadSavedCredentialsIfExist() {
+	if (!existsSync(TOKEN_PATH)) {
+		console.log("Token.json does not exist \nCreating file..");
+		return;
+	}
 	try {
 		const content = await fsPromise.readFile(TOKEN_PATH);
 		const credentials = JSON.parse(content);
@@ -25,7 +35,7 @@ async function loadSavedCredentialsIfExist() {
 	}
 }
 
-// Serializes credentials to a file compatible with GoogleAUth.fromJSON.
+// Serializes credentials to a file compatible with GoogleAUth.fromJSON.\
 async function saveCredentials(client) {
 	const content = await fsPromise.readFile(CREDENTIALS_PATH);
 	const keys = JSON.parse(content);
@@ -48,6 +58,7 @@ async function authorize() {
 	if (client) {
 		return client;
 	}
+	const spinner = createSpinner().start();
 	client = await authenticate({
 		scopes: SCOPES,
 		keyfilePath: CREDENTIALS_PATH,
@@ -55,10 +66,13 @@ async function authorize() {
 	if (client.credentials) {
 		await saveCredentials(client);
 	}
+	spinner.success();
+
 	return client;
 }
 /**
  * Lists the next 10 events on the user's primary calendar.
  */
 export const auth = await authorize();
+export { google };
 // global credentials
