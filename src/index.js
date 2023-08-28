@@ -1,15 +1,17 @@
 #!/usr/bin/env node
 import { Argument, Command } from "commander";
 import dayjs from "dayjs";
-import { doesUserDataFileExist, getCalendarNames, listCalendarNames, listCalendars, writeCalendarIDFile } from "./calendar.js";
+import { getCalendarNames, listCalendarNames, listCalendars } from "./calendar.js";
 import { parseDate } from "./dates.js";
 import { addEvents, listEvents } from "./events.js";
-import { listTaskLists, listTasks } from "./tasks.js";
-let calNames;
+import { getTasklist, listTaskLists, listTasks } from "./tasks.js";
+import { doesUserDataFileExist, writeUserDataFile } from "./utils.js";
+let calNames, tasklistNames;
 if (doesUserDataFileExist()) {
 	calNames = await getCalendarNames();
+	tasklistNames = await getTasklist();
 }
-const typeChoices = ["events", "calendars", "calendar-objects", "tasks", "task-lists"].concat(calNames);
+const typeChoices = ["events", "calendars", "calendar-objects", "tasks", "task-lists"].concat(calNames).concat(tasklistNames);
 
 const program = new Command();
 program.name("google-calendar-cli").description("CLI for google calendar").version("0.0.1");
@@ -57,6 +59,6 @@ program
 	.command("setup")
 	.description("login to google calendar and retrieve calendar IDs")
 	.action(() => {
-		writeCalendarIDFile();
+		writeUserDataFile();
 	});
 program.parse(process.argv);
