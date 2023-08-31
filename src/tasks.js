@@ -1,7 +1,7 @@
 import fsPromise from "fs/promises";
 import { user_data_path } from "./calendar.js";
+import { parseDate } from "./dates.js";
 import { auth, google } from "./googleauth.js";
-
 export async function listTaskLists() {
 	const service = google.tasks({ version: "v1", auth });
 	const res = await service.tasklists.list({
@@ -66,9 +66,10 @@ export async function listTasks(taskListName) {
 	let id;
 	if (!taskListName) {
 		id = await getTasklist();
-		console.log(id[0].id); //workeddddd
+		id = id[0].id;
 	} else {
 		id = await taskListNameToId(taskListName);
+		console.log("22: " + id);
 	}
 	// if (!id || typeof taskListName !== "undefined") {
 	// 	console.log("tasklist to id error");
@@ -84,7 +85,7 @@ export async function listTasks(taskListName) {
 			console.log("Google Tasks:");
 			tasks.forEach((task) => {
 				// console.log(task);
-				console.log(`${task.title} (${task.id})`);
+				console.log(`${task.title} (${task.due})`);
 			});
 		} else {
 			console.log("No task lists found.");
