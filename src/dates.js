@@ -147,8 +147,7 @@ export function parseDate(string) {
 	// console.log(year, month, day, hour, minutes);
 	try {
 		formattedDate = formattedDate.set("years", year).set("month", month).set("D", day).set("hours", hour).set("minute", minutes);
-		// console.log(formattedDate);
-		return formattedDate.toISOString();
+		return formattedDate.format("YYYY-MM-DDTHH:mm:ss[Z]");
 	} catch (error) {
 		console.log(`Daysjs date parsing error ${error}`);
 	}

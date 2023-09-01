@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import { getCalendarNames, listCalendarNames, listCalendars } from "./calendar.js";
 import { parseDate } from "./dates.js";
 import { addEvents, listEvents } from "./events.js";
-import { getTasklist, listTaskLists, listTasks } from "./tasks.js";
+import { addTask, getTasklist, listTaskLists, listTasks } from "./tasks.js";
 import { doesUserDataFileExist, writeUserDataFile } from "./utils.js";
 let calNames, tasklistNames;
 if (doesUserDataFileExist()) {
@@ -53,6 +53,15 @@ program
 			calName = "primary";
 		}
 		addEvents(calName, title, options.description, parseDate(options.start), parseDate(options.end));
+	});
+program
+	.command("add-task")
+	.description("add Google task to task list")
+	.argument("[title]", "task title name")
+	.requiredOption("-d, --due <string>", "event due date", dayjs(new Date()).add(1, "hours").toISOString())
+	.action(async (title, options) => {
+		console.log(title, options);
+		addTask(title, options.due);
 	});
 
 program

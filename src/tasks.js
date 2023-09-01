@@ -3,10 +3,14 @@ import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
 import fsPromise from "fs/promises";
+import { createSpinner } from "nanospinner";
 import { user_data_path } from "./calendar.js";
+import { getTimezone, parseDate } from "./dates.js";
 import { auth, google } from "./googleauth.js";
 dayjs.extend(utc);
 dayjs.extend(timezone);
+const service = google.tasks({ version: "v1", auth });
+
 export async function listTaskLists() {
 	const service = google.tasks({ version: "v1", auth });
 	const res = await service.tasklists.list({
@@ -92,7 +96,6 @@ export async function listTasks(taskListName) {
 	// if (!id || typeof taskListName !== "undefined") {
 	// 	console.log("tasklist to id error");
 	// }
-	const service = google.tasks({ version: "v1", auth });
 	try {
 		const res = await service.tasks.list({
 			tasklist: id,
@@ -113,4 +116,21 @@ export async function listTasks(taskListName) {
 	} catch (error) {
 		console.log(`Error listing tasks: ${error}`);
 	}
+}
+export async function addTask(title, dueDate) {
+	const spinner = createSpinner().start();
+	let date = parseDate(dueDate);
+	const tasklist = await getTasklist();
+	// console.log(listId);
+	await service.tasks.insert({
+		tasklist: tasklist[0].id,
+		auth: auth,
+
+		requestBody: {
+			title: title,
+			due: date,
+		},
+	});
+	spinner.success();
+	console.log(`Task successfully added\n------------------------\n${title} - ${formatDate(date)}`);
 }
