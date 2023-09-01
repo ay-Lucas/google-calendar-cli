@@ -5,10 +5,10 @@ import utc from "dayjs/plugin/utc.js";
 import fsPromise from "fs/promises";
 import { createSpinner } from "nanospinner";
 import { user_data_path } from "./calendar.js";
-import { getTimezone, parseDate } from "./dates.js";
+import { formatDate, parseDateTimeInput } from "./dates.js";
 import { auth, google } from "./googleauth.js";
-dayjs.extend(utc);
-dayjs.extend(timezone);
+// dayjs.extend(utc);
+// dayjs.extend(timezone);
 const service = google.tasks({ version: "v1", auth });
 
 export async function listTaskLists() {
@@ -28,20 +28,6 @@ export async function listTaskLists() {
 		console.log("No task lists found.");
 	}
 }
-
-// async function getTaskListId(taskListName) {
-// 	let id;
-// 	const info = await fsPromise.readFile(user_data_path);
-// 	const data = JSON.parse(info);
-// 	// console.log(data);
-// 	data.forEach((task) => {
-// 		if (taskListName.toLowerCase() === task.title.toLowerCase()) {
-// 			id = calendar.id;
-// 			return;
-// 		}
-// 	});
-// 	return id;
-// }
 export async function getTasklist() {
 	try {
 		const info = await fsPromise.readFile(user_data_path);
@@ -67,19 +53,8 @@ async function taskListNameToId(taskListName) {
 		console.log("tasklist name to Id error");
 	}
 }
-
-/**
- * TODO:
- * add task due date bounds
- **/
-const formatDate = (str) => {
-	let date = dayjs(str);
-	date = date.tz("utc");
-	if (date.get("h") === 0) {
-		return date.format("M/D dddd");
-	} else {
-		return date.format("M/D ddd h:mm a");
-	}
+const handleFormat = (dueDate, title) => {
+	console.log(`${chalk.bgGrey(formatDate(dueDate))} \n${chalk.cyan(title)}\n`);
 };
 export async function listTasks(taskListName) {
 	// if (taskListName === "" || !taskListName || typeof taskListName === "undefined") {
@@ -103,12 +78,9 @@ export async function listTasks(taskListName) {
 		});
 		const tasks = res.data.items;
 		if (tasks && tasks.length) {
-			console.log("Google Tasks:\n");
+			console.log(chalk.greenBright.bold("Google Tasks: ") + "\n");
 			tasks.forEach((task) => {
-				// console.log(task);
-				// console.log(`${chalk.bgGrey(dayjs(task.due).format("D/M ddd h:mm a"))}`);
-				console.log(`${chalk.bgGrey(formatDate(task.due))}`);
-				console.log(`${chalk.green(task.title)}\n`);
+				handleFormat(task.due, task.title);
 			});
 		} else {
 			console.log("No task lists found.");
@@ -119,7 +91,7 @@ export async function listTasks(taskListName) {
 }
 export async function addTask(title, dueDate) {
 	const spinner = createSpinner().start();
-	let date = parseDate(dueDate);
+	let date = parseDateTimeInput(dueDate);
 	const tasklist = await getTasklist();
 	// console.log(listId);
 	await service.tasks.insert({

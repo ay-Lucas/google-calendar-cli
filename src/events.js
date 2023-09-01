@@ -1,8 +1,22 @@
 import chalk from "chalk";
 import { createSpinner } from "nanospinner";
 import { calendar, calendarNameToId } from "./calendar.js";
-import { formatEventDateTime, getTimezone } from "./dates.js";
+import { formatDate, formatTime, getDiffInDateTime, getTimezone, parseDateTimeInput } from "./dates.js";
 import { auth } from "./googleauth.js";
+
+const handleFormat = (start, end, summary) => {
+	let time;
+	let hourDifference = getDiffInDateTime(start, end);
+	if (hourDifference === 24) {
+		time = `${formatDate(start)}`;
+	} else if (hourDifference < 5) {
+		time = `${formatDate(start)} - ${formatTime(end)}`;
+	} else {
+		time = `${formatDate(start)} - ${formatDate(end)}`;
+	}
+	console.log(`${chalk.bgGrey(time)} \n${chalk.cyan(summary)}\n`);
+	// console.log("----------------------------------");
+};
 export async function listEvents(num, calendarName) {
 	if (!auth) {
 		return;
@@ -21,17 +35,19 @@ export async function listEvents(num, calendarName) {
 		const events = res.data.items;
 		// stops spinner
 		spinner.success();
-		console.log(`${chalk.green(calendarName)}:\n`);
 		if (!events || events.length === 0) {
 			console.log("No upcoming events found.");
 			return;
 		}
 
 		// eslint-disable-next-line no-unused-vars
+		console.log(chalk.greenBright.bold(calendarName) + ": " + "\n");
 		events.map((event, i) => {
 			const start = event.start.dateTime || event.start.date;
 			const end = event.end.dateTime || event.end.date;
-			console.log(`${formatEventDateTime(start, end)} - ${event.summary}\n `);
+			const summary = event.summary;
+			handleFormat(start, end, summary);
+			// console.log(event);
 		});
 	} catch (error) {
 		spinner.error();
@@ -48,11 +64,11 @@ export async function addEvents(calendarName, title, description, timeStart, tim
 			summary: title,
 			description: description,
 			start: {
-				dateTime: timeStart,
+				dateTime: parseDateTimeInput(timeStart),
 				timeZone: getTimezone(),
 			},
 			end: {
-				dateTime: timeEnd,
+				dateTime: parseDateTimeInput(timeEnd),
 				timeZone: getTimezone(),
 			},
 		},

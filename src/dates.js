@@ -1,39 +1,65 @@
-import chalk from "chalk";
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
+import localizedFormat from "dayjs/plugin/localizedFormat.js";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
+dayjs.extend(localizedFormat);
 const isEmpty = (index) => index !== "" && index !== " " && typeof index !== "undefined" && index;
-export function formatEventDateTime(start, end) {
-	let date, time, formattedDate;
-	let last;
-	let arr = [start, end];
-	let formattedDates = [];
-	for (let i = 0; i < arr.length; i++) {
-		let ohno = dayjs(arr[i]).format("M/D dddd|h:mm a");
-		let split = ohno.split("|", 2);
-		date = split[0];
-		time = split[1];
-		if (i === 0) {
-			formattedDate = `${chalk.bgGrey(date)}\n ${chalk.green(time)}`;
-		} else {
-			formattedDate = `${chalk.green(time)}`;
-		}
-		if (last === time) {
-			formattedDates = `${chalk.bgGrey(date)}`;
-		} else {
-			formattedDates.push(formattedDate);
-			last = time;
-		}
+// export function formatEventDateTime(start, end) {
+// 	let date, time, formattedDate;
+// 	let last;
+// 	let arr = [start, end];
+// 	let formattedDates = [];
+// 	const tz = "America/New_York";
+// 	console.log(start, end);
+// 	for (let i = 0; i < arr.length; i++) {
+// 		let dateStr = dayjs(arr[i]).format("M/D dddd|h:mm a", tz);
+// 		// let dateTime = dateStr.tz(tz);
+// 		console.log(dateStr);
+// 		let split = dateStr.split("|", 2);
+// 		date = split[0];
+// 		time = split[1];
+// 		if (i === 0) {
+// 			formattedDate = `${chalk.bgGrey(date)}\n ${chalk.green(time)}`;
+// 		} else {
+// 			formattedDate = `${chalk.green(time)}`;
+// 		}
+// 		if (last === time) {
+// 			formattedDates = `${chalk.bgGrey(date)}`;
+// 		} else {
+// 			formattedDates.push(formattedDate);
+// 			last = time;
+// 		}
+// 	}
+
+// 	return typeof formattedDates === "object" ? formattedDates.join(" - ") : formattedDates;
+// }
+// export const getTime = (dateStr) => {
+// 	let hours = dateStr.getHours();
+// 	return dayjs(date).get("hours");
+// };
+export const formatDate = (str) => {
+	let date = dayjs(str);
+	date = date.tz("utc");
+	// console.log(str);
+	// console.log(getTimezone());
+	if (date.get("h") === 0) {
+		return date.format("M/D dddd");
+	} else {
+		return date.format("M/D dddd h:mm A");
 	}
-	return typeof formattedDates === "object" ? formattedDates.join(" - ") : formattedDates;
-}
+};
+// returns difference in hours
+export const getDiffInDateTime = (dateTime1, dateTime2) => {
+	return dayjs(dateTime2).diff(dayjs(dateTime1), "hours");
+};
 export function formatTime(string) {
 	let formattedDate = dayjs(string);
-	return chalk.cyan(formattedDate.format("HH:MM"));
+	return formattedDate.format("LT");
+	// return chalk.cyan(formattedDate.format("hh:mm"));
 }
 export function getTimezone() {
 	return dayjs.tz.guess();
@@ -94,7 +120,11 @@ function handleTime(time) {
 	minutes = parseInt(minutes.split(str, 1)[0]);
 	return [hour, minutes];
 }
-export function parseDate(string) {
+/*
+ * parses user inputted Date Times delimited by either '/' or '-'
+ * and optionally 12 hour clock
+ */
+export function parseDateTimeInput(string) {
 	let time, date, month, day, year, hour, minutes, formattedDate;
 	// date delimited by '/' or '-'
 	const isTimeStr = (str) => str.indexOf("/") === -1 && str.indexOf("-") === -1;

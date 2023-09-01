@@ -2,7 +2,6 @@
 import { Argument, Command } from "commander";
 import dayjs from "dayjs";
 import { getCalendarNames, listCalendarNames, listCalendars } from "./calendar.js";
-import { parseDate } from "./dates.js";
 import { addEvents, listEvents } from "./events.js";
 import { addTask, getTasklist, listTaskLists, listTasks } from "./tasks.js";
 import { doesUserDataFileExist, writeUserDataFile } from "./utils.js";
@@ -52,7 +51,7 @@ program
 			title = calName;
 			calName = "primary";
 		}
-		addEvents(calName, title, options.description, parseDate(options.start), parseDate(options.end));
+		addEvents(calName, title, options.description, options.start, options.end);
 	});
 program
 	.command("add-task")
