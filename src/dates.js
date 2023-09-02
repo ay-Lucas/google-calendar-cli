@@ -1,65 +1,38 @@
 import dayjs from "dayjs";
 import customParseFormat from "dayjs/plugin/customParseFormat.js";
 import localizedFormat from "dayjs/plugin/localizedFormat.js";
+import objectSupport from "dayjs/plugin/objectSupport.js";
 import timezone from "dayjs/plugin/timezone.js";
 import utc from "dayjs/plugin/utc.js";
+import { isEmpty } from "./utils.js";
 dayjs.extend(customParseFormat);
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(localizedFormat);
-const isEmpty = (index) => index !== "" && index !== " " && typeof index !== "undefined" && index;
-// export function formatEventDateTime(start, end) {
-// 	let date, time, formattedDate;
-// 	let last;
-// 	let arr = [start, end];
-// 	let formattedDates = [];
-// 	const tz = "America/New_York";
-// 	console.log(start, end);
-// 	for (let i = 0; i < arr.length; i++) {
-// 		let dateStr = dayjs(arr[i]).format("M/D dddd|h:mm a", tz);
-// 		// let dateTime = dateStr.tz(tz);
-// 		console.log(dateStr);
-// 		let split = dateStr.split("|", 2);
-// 		date = split[0];
-// 		time = split[1];
-// 		if (i === 0) {
-// 			formattedDate = `${chalk.bgGrey(date)}\n ${chalk.green(time)}`;
-// 		} else {
-// 			formattedDate = `${chalk.green(time)}`;
-// 		}
-// 		if (last === time) {
-// 			formattedDates = `${chalk.bgGrey(date)}`;
-// 		} else {
-// 			formattedDates.push(formattedDate);
-// 			last = time;
-// 		}
-// 	}
+dayjs.extend(objectSupport);
+const isTimeStr = (str) => str.indexOf("/") === -1 && str.indexOf("-") === -1;
+const dateRegEx = new RegExp(/^\d{4}(\/|-)(0[1-9]|1[012])(\/|-)(0[1-9]|[12][0-9]|3[01])$/);
 
-// 	return typeof formattedDates === "object" ? formattedDates.join(" - ") : formattedDates;
-// }
-// export const getTime = (dateStr) => {
-// 	let hours = dateStr.getHours();
-// 	return dayjs(date).get("hours");
-// };
 export const formatDate = (str) => {
-	let date = dayjs(str);
-	date = date.tz("utc");
-	// console.log(str);
-	// console.log(getTimezone());
-	if (date.get("h") === 0) {
-		return date.format("M/D dddd");
+	const dateObj = dayjs(str);
+	const hoursLeft = dateObj.get("hours");
+	if (dateRegEx.test(str) || hoursLeft < 1) {
+		return dateObj.format("M/D dddd");
 	} else {
-		return date.format("M/D dddd h:mm A");
+		return dateObj.format("M/D dddd h:mm A");
 	}
 };
-// returns difference in hours
+export const convertTimeZoneToUTC = (date) => {
+	let dateObj = dayjs(date);
+	let utc = dateObj.tz("utc", true);
+	return utc;
+};
 export const getDiffInDateTime = (dateTime1, dateTime2) => {
 	return dayjs(dateTime2).diff(dayjs(dateTime1), "hours");
 };
 export function formatTime(string) {
 	let formattedDate = dayjs(string);
 	return formattedDate.format("LT");
-	// return chalk.cyan(formattedDate.format("hh:mm"));
 }
 export function getTimezone() {
 	return dayjs.tz.guess();
@@ -107,8 +80,8 @@ function handleTime(time) {
 	if (time.indexOf(":") === -1) {
 		return handleNoMinutes(time);
 	}
-	hour = parseHours(time); // Type === Number
-	minutes = parseMinutes(time); // Type === String
+	hour = parseHours(time);
+	minutes = parseMinutes(time);
 
 	minutes = minutes.toLowerCase();
 	if (checkAmPm(minutes) === "pm") {
@@ -124,61 +97,83 @@ function handleTime(time) {
  * parses user inputted Date Times delimited by either '/' or '-'
  * and optionally 12 hour clock
  */
-export function parseDateTimeInput(string) {
-	let time, date, month, day, year, hour, minutes, formattedDate;
-	// date delimited by '/' or '-'
-	const isTimeStr = (str) => str.indexOf("/") === -1 && str.indexOf("-") === -1;
+export function parseDateTimeInput(input) {
+	let time, date, hour, minutes, formattedDate, split;
 
-	if (string.indexOf(" ") === -1) return;
-	// split date and time
-	let split = string.split(" ");
-	// remove whitespace
-	split = split.map((element) => element.trim());
-	// checks for empty indicies
-	split = split.filter(isEmpty);
-	if (split.length === 3) {
-		let arr = [];
-		if (checkAmPm(split[2]) === false && checkAmPm(split[1]) === false) return;
-		let temp = split.findIndex((element) => checkAmPm(element) === "am" || checkAmPm(element) === "pm");
-		// console.log(temp);
-		for (let i = 0; i < split.length; i++) {
-			if (i === temp) {
-				continue;
-			} else if (i === temp - 1) {
-				arr.push(split[i].concat(split[temp]));
-			} else {
-				arr.push(split[i]);
+	let trimmedStr = input.trim();
+	if (trimmedStr.indexOf(" ") !== -1) {
+		split = trimmedStr.split(" ");
+		split = split.map((element) => element.trim());
+		split = split.filter(isEmpty);
+		if (split.length === 3) {
+			let arr = [];
+			if (checkAmPm(split[2]) === false && checkAmPm(split[1]) === false) return;
+			let temp = split.findIndex((element) => checkAmPm(element) === "am" || checkAmPm(element) === "pm");
+			// console.log(temp);
+			for (let i = 0; i < split.length; i++) {
+				if (i === temp) {
+					continue;
+				} else if (i === temp - 1) {
+					arr.push(split[i].concat(split[temp]));
+				} else {
+					arr.push(split[i]);
+				}
 			}
+			split = arr;
+		} else if (split.length !== 2) {
+			throw new Error("Argument must provide both Date and Time, separated by a space");
 		}
-		split = arr;
-		// console.log(split);
-	} else if (split.length !== 2) {
-		throw new Error("Argument must provide both Date and Time, separated by a space");
-	}
-	// index that has a colon ':' indicates a time.
-	// reverses array if the first index does not contain a colon ':'
-	let timeIndex = split.findIndex(isTimeStr);
-	split = timeIndex > 0 ? split.reverse() : split;
-	time = split[0];
-	date = split[1];
-	[hour, minutes] = handleTime(time);
+		let timeIndex = split.findIndex(isTimeStr);
+		split = timeIndex > 0 ? split.reverse() : split;
+		time = split[0];
+		[hour, minutes] = handleTime(time);
+		console.log(hour, minutes);
 
-	// split date into month and day and possibly year
-	date = date.split("/");
-	month = date[0];
-	day = date[1];
-	year = date.length > 2 ? date[2] : dayjs().year();
-	// add full year if abbreviated
-	year = year.length === 2 ? `20${year}` : year;
-	day = parseInt(day);
-	month = parseInt(month) - 1;
-	let d = new Date();
-	formattedDate = dayjs(d);
-	// console.log(year, month, day, hour, minutes);
-	try {
-		formattedDate = formattedDate.set("years", year).set("month", month).set("D", day).set("hours", hour).set("minute", minutes);
-		return formattedDate.format("YYYY-MM-DDTHH:mm:ss[Z]");
-	} catch (error) {
-		console.log(`Daysjs date parsing error ${error}`);
+		date = parseDateOnly(split[1]);
+		let dateStr = dayjs(date);
+		try {
+			formattedDate = dateStr.set("hours", hour).set("minutes", minutes);
+			formattedDate = formattedDate.format("YYYY-MM-DDTHH:mm:ss[Z]");
+			console.log("formatted Date Time: " + formattedDate);
+			return formattedDate;
+		} catch (error) {
+			console.log(`Daysjs date parsing error ${error}`);
+		}
+	} else {
+		try {
+			let date = parseDateOnly(trimmedStr);
+			// let dayjs = dayjs(date);
+			formattedDate = dayjs(date).format("YYYY-MM-DDTHH:mm:ss[Z]");
+			console.log("formatted Date: " + formattedDate);
+			return formattedDate;
+		} catch (error) {
+			console.log(`Daysjs date parsing error ${error}`);
+		}
 	}
 }
+const parseDateOnly = (dateStr) => {
+	// check for delimiters '-' '/'
+	let delimiter;
+	if (isTimeStr(dateStr)) return;
+	if (dateStr.indexOf("/") !== -1) {
+		delimiter = "/";
+	} else if (dateStr.indexOf("-") !== -1) {
+		delimiter = "-";
+	} else {
+		return;
+	}
+	try {
+		let str = dateStr.split(delimiter);
+		let year = str.length === 3 ? parseInt(str[2], 10) : dayjs().get("year");
+		let month = parseInt(str[0], 10) - 1;
+		let day = parseInt(str[1], 10);
+
+		const date = new dayjs({ year: year, month: month, day: day });
+
+		console.log(`datestr: ${dateStr} str: ${str} month: ${month} day: ${day} year: ${year} date: ${date}`);
+		console.log("Date Only parse: " + date.format("YYYY-MM-DDTHH"));
+		return date;
+	} catch (error) {
+		console.log(`Error in parseDateOnly: ${error}`);
+	}
+};

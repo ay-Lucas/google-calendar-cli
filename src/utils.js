@@ -35,3 +35,4 @@ export async function writeUserDataFile() {
 		console.log(`Calendar list API error ${error}`);
 	}
 }
+export const isEmpty = (index) => index !== "" && index !== " " && typeof index !== "undefined" && index;

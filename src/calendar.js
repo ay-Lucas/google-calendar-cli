@@ -6,6 +6,7 @@ import { createSpinner } from "nanospinner";
 import path from "path";
 import { fileURLToPath } from "url";
 import { auth } from "./googleauth.js";
+import { isEmpty } from "./utils.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 export const user_data_path = path.join(__dirname, "user_data.json");
@@ -78,3 +79,21 @@ export async function listCalendarNames() {
 	console.log(`(${chalk.cyan(names.length)}) Calendar Names: \n`);
 	names.forEach((calendar) => console.log(chalk.blueBright(`- ${calendar}`)));
 }
+// export async function getCalendar(summary, id) {
+// 	try {
+// 		if(isEmpty(id)){
+// 			const calendarId = await getCalendarId(summary);
+// 		}
+// 		else{
+
+// 			const info = await fsPromise.readFile(user_data_path);
+// 			const data = JSON.parse(info);
+// 			const calendarList = data.calendar_list[0];
+// 			const calendar = calendarList.getElem
+// 		}
+// 		// console.log(tasks);
+// 		return tasks;
+// 	} catch (error) {
+// 		console.log("failed to retrieve calendar");
+// 	}
+// }

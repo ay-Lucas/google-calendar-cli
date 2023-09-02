@@ -15,13 +15,12 @@ const handleFormat = (start, end, summary) => {
 		time = `${formatDate(start)} - ${formatDate(end)}`;
 	}
 	console.log(`${chalk.bgGrey(time)} \n${chalk.cyan(summary)}\n`);
-	// console.log("----------------------------------");
 };
 export async function listEvents(num, calendarName) {
 	if (!auth) {
 		return;
 	}
-	const spinner = createSpinner().start(); // creates spinner in console
+	const spinner = createSpinner().start();
 
 	try {
 		const res = await calendar.events.list({
@@ -33,7 +32,6 @@ export async function listEvents(num, calendarName) {
 			// timeMax:
 		});
 		const events = res.data.items;
-		// stops spinner
 		spinner.success();
 		if (!events || events.length === 0) {
 			console.log("No upcoming events found.");
@@ -41,13 +39,12 @@ export async function listEvents(num, calendarName) {
 		}
 
 		// eslint-disable-next-line no-unused-vars
-		console.log(chalk.greenBright.bold(calendarName) + ": " + "\n");
+		console.log(`${chalk.greenBright.bold(calendarName + " calendar:")}\n`);
 		events.map((event, i) => {
 			const start = event.start.dateTime || event.start.date;
 			const end = event.end.dateTime || event.end.date;
 			const summary = event.summary;
 			handleFormat(start, end, summary);
-			// console.log(event);
 		});
 	} catch (error) {
 		spinner.error();
@@ -57,6 +54,8 @@ export async function listEvents(num, calendarName) {
 
 export async function addEvents(calendarName, title, description, timeStart, timeEnd) {
 	const spinner = createSpinner().start();
+	const start = parseDateTimeInput(timeStart);
+	const end = parseDateTimeInput(timeEnd);
 	await calendar.events.insert({
 		calendarId: await calendarNameToId(calendarName),
 		auth: auth,
@@ -64,15 +63,16 @@ export async function addEvents(calendarName, title, description, timeStart, tim
 			summary: title,
 			description: description,
 			start: {
-				dateTime: parseDateTimeInput(timeStart),
+				dateTime: start,
 				timeZone: getTimezone(),
 			},
 			end: {
-				dateTime: parseDateTimeInput(timeEnd),
+				dateTime: end,
 				timeZone: getTimezone(),
 			},
 		},
 	});
 	spinner.success();
-	console.log(`Event successfully added\n------------------------\n${formatEventDateTime(timeStart, timeEnd)} - ${(calendarName, title)}`);
+	console.log(`Event successfully added to ${chalk.greenBright(calendarName)} calendar\n------------------------\n`);
+	handleFormat(start, end, title);
 }

@@ -1,14 +1,9 @@
 import chalk from "chalk";
-import dayjs from "dayjs";
-import timezone from "dayjs/plugin/timezone.js";
-import utc from "dayjs/plugin/utc.js";
 import fsPromise from "fs/promises";
 import { createSpinner } from "nanospinner";
 import { user_data_path } from "./calendar.js";
-import { formatDate, parseDateTimeInput } from "./dates.js";
+import { convertTimeZoneToUTC, formatDate, parseDateTimeInput } from "./dates.js";
 import { auth, google } from "./googleauth.js";
-// dayjs.extend(utc);
-// dayjs.extend(timezone);
 const service = google.tasks({ version: "v1", auth });
 
 export async function listTaskLists() {
@@ -33,7 +28,6 @@ export async function getTasklist() {
 		const info = await fsPromise.readFile(user_data_path);
 		const data = JSON.parse(info);
 		const tasks = data.task_list;
-		// console.log(tasks);
 		return tasks;
 	} catch (error) {
 		console.log("failed to retrieve task list");
@@ -54,27 +48,23 @@ async function taskListNameToId(taskListName) {
 	}
 }
 const handleFormat = (dueDate, title) => {
-	console.log(`${chalk.bgGrey(formatDate(dueDate))} \n${chalk.cyan(title)}\n`);
+	const dueDateInUTC = convertTimeZoneToUTC(dueDate);
+	console.log(`${chalk.bgGrey(formatDate(dueDateInUTC))} \n${chalk.cyan(title)}\n`);
 };
 export async function listTasks(taskListName) {
-	// if (taskListName === "" || !taskListName || typeof taskListName === "undefined") {
-	// 	console.log("invalid tasklist name");
-	// }
 	let id;
 	if (!taskListName) {
-		id = await getTasklist();
-		id = id[0].id;
+		const taskList = await getTasklist();
+		id = taskList[0].id;
 	} else {
 		id = await taskListNameToId(taskListName);
 		console.log("22: " + id);
 	}
-	// if (!id || typeof taskListName !== "undefined") {
-	// 	console.log("tasklist to id error");
-	// }
 	try {
 		const res = await service.tasks.list({
 			tasklist: id,
-			maxResults: 10,
+			showCompleted: false,
+			showDeleted: false,
 		});
 		const tasks = res.data.items;
 		if (tasks && tasks.length) {
@@ -92,10 +82,10 @@ export async function listTasks(taskListName) {
 export async function addTask(title, dueDate) {
 	const spinner = createSpinner().start();
 	let date = parseDateTimeInput(dueDate);
-	const tasklist = await getTasklist();
-	// console.log(listId);
+	const taskList = await getTasklist();
+	console.log("date: " + date);
 	await service.tasks.insert({
-		tasklist: tasklist[0].id,
+		tasklist: taskList[0].id,
 		auth: auth,
 
 		requestBody: {
