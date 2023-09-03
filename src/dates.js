@@ -127,14 +127,14 @@ export function parseDateTimeInput(input) {
 		split = timeIndex > 0 ? split.reverse() : split;
 		time = split[0];
 		[hour, minutes] = handleTime(time);
-		console.log(hour, minutes);
+		// console.log(hour, minutes);
 
 		date = parseDateOnly(split[1]);
 		let dateStr = dayjs(date);
 		try {
 			formattedDate = dateStr.set("hours", hour).set("minutes", minutes);
 			formattedDate = formattedDate.format("YYYY-MM-DDTHH:mm:ss[Z]");
-			console.log("formatted Date Time: " + formattedDate);
+			// console.log("formatted Date Time: " + formattedDate);
 			return formattedDate;
 		} catch (error) {
 			console.log(`Daysjs date parsing error ${error}`);
@@ -142,9 +142,8 @@ export function parseDateTimeInput(input) {
 	} else {
 		try {
 			let date = parseDateOnly(trimmedStr);
-			// let dayjs = dayjs(date);
 			formattedDate = dayjs(date).format("YYYY-MM-DDTHH:mm:ss[Z]");
-			console.log("formatted Date: " + formattedDate);
+			// console.log("formatted Date: " + formattedDate);
 			return formattedDate;
 		} catch (error) {
 			console.log(`Daysjs date parsing error ${error}`);
@@ -167,11 +166,9 @@ const parseDateOnly = (dateStr) => {
 		let year = str.length === 3 ? parseInt(str[2], 10) : dayjs().get("year");
 		let month = parseInt(str[0], 10) - 1;
 		let day = parseInt(str[1], 10);
-
 		const date = new dayjs({ year: year, month: month, day: day });
-
-		console.log(`datestr: ${dateStr} str: ${str} month: ${month} day: ${day} year: ${year} date: ${date}`);
-		console.log("Date Only parse: " + date.format("YYYY-MM-DDTHH"));
+		// console.log(`datestr: ${dateStr} str: ${str} month: ${month} day: ${day} year: ${year} date: ${date}`);
+		// console.log("Date Only parse: " + date.format("YYYY-MM-DDTHH"));
 		return date;
 	} catch (error) {
 		console.log(`Error in parseDateOnly: ${error}`);

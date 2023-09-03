@@ -59,7 +59,7 @@ program
 	.argument("[title]", "task title name")
 	.requiredOption("-d, --due <string>", "event due date", dayjs(new Date()).add(1, "hours").toISOString())
 	.action(async (title, options) => {
-		console.log(title, options);
+		// console.log(title, options);
 		addTask(title, options.due);
 	});
 

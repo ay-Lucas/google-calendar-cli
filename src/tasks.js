@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import dayjs from "dayjs";
 import fsPromise from "fs/promises";
 import { createSpinner } from "nanospinner";
 import { user_data_path } from "./calendar.js";
@@ -58,7 +59,6 @@ export async function listTasks(taskListName) {
 		id = taskList[0].id;
 	} else {
 		id = await taskListNameToId(taskListName);
-		console.log("22: " + id);
 	}
 	try {
 		const res = await service.tasks.list({
@@ -66,7 +66,7 @@ export async function listTasks(taskListName) {
 			showCompleted: false,
 			showDeleted: false,
 		});
-		const tasks = res.data.items;
+		const tasks = await sortTasks(res.data.items);
 		if (tasks && tasks.length) {
 			console.log(chalk.greenBright.bold("Google Tasks: ") + "\n");
 			tasks.forEach((task) => {
@@ -83,7 +83,6 @@ export async function addTask(title, dueDate) {
 	const spinner = createSpinner().start();
 	let date = parseDateTimeInput(dueDate);
 	const taskList = await getTasklist();
-	console.log("date: " + date);
 	await service.tasks.insert({
 		tasklist: taskList[0].id,
 		auth: auth,
@@ -94,5 +93,23 @@ export async function addTask(title, dueDate) {
 		},
 	});
 	spinner.success();
-	console.log(`Task successfully added\n------------------------\n${title} - ${formatDate(date)}`);
+	console.log("Task successfully added\n------------------------");
+	handleFormat(date, title);
+}
+function sortTasks(arr) {
+	let temp;
+	var swapped;
+	for (let i = 0; i < arr.length - 1; i++) {
+		swapped = false;
+		for (let j = 0; j < arr.length - 1; j++) {
+			if (dayjs(arr[j + 1].due).isBefore(dayjs(arr[j].due))) {
+				temp = arr[j];
+				arr[j] = arr[j + 1];
+				arr[j + 1] = temp;
+				swapped = true;
+			}
+		}
+		if (swapped == false) break;
+	}
+	return arr;
 }
