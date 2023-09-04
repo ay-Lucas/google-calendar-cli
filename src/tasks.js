@@ -29,6 +29,7 @@ export async function getTasklist() {
 		const info = await fsPromise.readFile(user_data_path);
 		const data = JSON.parse(info);
 		const tasks = data.task_list;
+		// console.log(tasks);
 		return tasks;
 	} catch (error) {
 		console.log("failed to retrieve task list");
@@ -52,7 +53,7 @@ const handleFormat = (dueDate, title) => {
 	const dueDateInUTC = convertTimeZoneToUTC(dueDate);
 	console.log(`${chalk.bgGrey(formatDate(dueDateInUTC))} \n${chalk.cyan(title)}\n`);
 };
-export async function listTasks(taskListName) {
+export async function listTasks(taskListName, isDetailed, listId) {
 	let id;
 	if (!taskListName) {
 		const taskList = await getTasklist();
@@ -70,6 +71,8 @@ export async function listTasks(taskListName) {
 		if (tasks && tasks.length) {
 			console.log(chalk.greenBright.bold("Google Tasks: ") + "\n");
 			tasks.forEach((task) => {
+				if (isDetailed) console.log(task);
+				if (listId) console.log(`Task ID: ${chalk.green(task.id)}`);
 				handleFormat(task.due, task.title);
 			});
 		} else {
@@ -112,4 +115,21 @@ function sortTasks(arr) {
 		if (swapped == false) break;
 	}
 	return arr;
+}
+export async function deleteTask(id) {
+	// if (isEmpty(id)) return;
+	const spinner = createSpinner().start();
+	// let date = parseDateTimeInput(dueDate);
+	const taskList = await getTasklist();
+	try {
+		await service.tasks.delete({
+			auth: auth,
+			tasklist: taskList[0].id,
+			task: id,
+		});
+	} catch (error) {
+		console.log(`Error deleting task: ${error}`);
+	}
+	spinner.success();
+	console.log("Task successfully deleted\n------------------------");
 }

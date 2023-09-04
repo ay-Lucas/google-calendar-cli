@@ -16,7 +16,7 @@ const handleFormat = (start, end, summary) => {
 	}
 	console.log(`${chalk.bgGrey(time)} \n${chalk.cyan(summary)}\n`);
 };
-export async function listEvents(num, calendarName) {
+export async function listEvents(num, calendarName, listId) {
 	if (!auth) {
 		return;
 	}
@@ -41,6 +41,7 @@ export async function listEvents(num, calendarName) {
 		// eslint-disable-next-line no-unused-vars
 		console.log(`${chalk.greenBright.bold(calendarName + " calendar:")}\n`);
 		events.map((event, i) => {
+			if (listId) console.log(`Task ID: ${chalk.green(event.id)}`);
 			const start = event.start.dateTime || event.start.date;
 			const end = event.end.dateTime || event.end.date;
 			const summary = event.summary;
@@ -51,7 +52,17 @@ export async function listEvents(num, calendarName) {
 		console.log(`list events API error ${error}`);
 	}
 }
-
+export async function deleteEvent(calendarName, eventId) {
+	try {
+		await calendar.events.delete({
+			auth: auth,
+			calendarId: await calendarNameToId(calendarName),
+			id: eventId,
+		});
+	} catch (error) {
+		console.log(`Error deleting event: ${error}`);
+	}
+}
 export async function addEvents(calendarName, title, description, timeStart, timeEnd) {
 	const spinner = createSpinner().start();
 	const start = parseDateTimeInput(timeStart);
@@ -64,11 +75,11 @@ export async function addEvents(calendarName, title, description, timeStart, tim
 			description: description,
 			start: {
 				dateTime: start,
-				timeZone: getTimezone(),
+				// timeZone: getTimezone(),
 			},
 			end: {
 				dateTime: end,
-				timeZone: getTimezone(),
+				// timeZone: getTimezone(),
 			},
 		},
 	});

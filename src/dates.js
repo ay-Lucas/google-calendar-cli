@@ -131,10 +131,11 @@ export function parseDateTimeInput(input) {
 
 		date = parseDateOnly(split[1]);
 		let dateStr = dayjs(date);
+		dateStr = dateStr.tz(getTimezone());
 		try {
 			formattedDate = dateStr.set("hours", hour).set("minutes", minutes);
-			formattedDate = formattedDate.format("YYYY-MM-DDTHH:mm:ss[Z]");
-			// console.log("formatted Date Time: " + formattedDate);
+			formattedDate = formattedDate.format("YYYY-MM-DDTHH:mm:ssZ");
+			console.log("formatted Date Time: " + formattedDate);
 			return formattedDate;
 		} catch (error) {
 			console.log(`Daysjs date parsing error ${error}`);
