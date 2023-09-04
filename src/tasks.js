@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import fsPromise from "fs/promises";
 import { createSpinner } from "nanospinner";
 import { user_data_path } from "./calendar.js";
-import { convertTimeZoneToUTC, formatDate, parseDateTimeInput } from "./dates.js";
+import { formatDate, parseDateTimeInput } from "./dates.js";
 import { auth, google } from "./googleauth.js";
 const service = google.tasks({ version: "v1", auth });
 
@@ -50,8 +50,7 @@ async function taskListNameToId(taskListName) {
 	}
 }
 const handleFormat = (dueDate, title) => {
-	const dueDateInUTC = convertTimeZoneToUTC(dueDate);
-	console.log(`${chalk.bgGrey(formatDate(dueDateInUTC))} \n${chalk.cyan(title)}\n`);
+	console.log(`${chalk.bgGrey(formatDate(dueDate))} \n${chalk.cyan(title)}\n`);
 };
 export async function listTasks(taskListName, isDetailed, listId) {
 	let id;
@@ -84,7 +83,14 @@ export async function listTasks(taskListName, isDetailed, listId) {
 }
 export async function addTask(title, dueDate) {
 	const spinner = createSpinner().start();
-	let date = parseDateTimeInput(dueDate);
+	const date = parseDateTimeInput(dueDate);
+	const splitDate = date.split("T");
+	const dateOnly = splitDate[0];
+	const timeOnly = splitDate[1];
+	console.log(date);
+	if (timeOnly.substring(0, 2) !== "00") {
+		console.log("Google Tasks API currently only supports a due date.\nThe task will be assigned the due date you provided.");
+	}
 	const taskList = await getTasklist();
 	await service.tasks.insert({
 		tasklist: taskList[0].id,
@@ -97,7 +103,7 @@ export async function addTask(title, dueDate) {
 	});
 	spinner.success();
 	console.log("Task successfully added\n------------------------");
-	handleFormat(date, title);
+	handleFormat(dateOnly, title);
 }
 function sortTasks(arr) {
 	let temp;

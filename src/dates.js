@@ -143,7 +143,7 @@ export function parseDateTimeInput(input) {
 	} else {
 		try {
 			let date = parseDateOnly(trimmedStr);
-			formattedDate = dayjs(date).format("YYYY-MM-DDTHH:mm:ss[Z]");
+			formattedDate = dayjs(date).format("YYYY-MM-DDTHH:mm:ssZ");
 			// console.log("formatted Date: " + formattedDate);
 			return formattedDate;
 		} catch (error) {

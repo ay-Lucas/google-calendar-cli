@@ -1,3 +1,5 @@
+/* eslint-disable no-mixed-spaces-and-tabs */
+/* eslint-disable indent */
 import chalk from "chalk";
 import { createSpinner } from "nanospinner";
 import { calendar, calendarNameToId } from "./calendar.js";
@@ -63,25 +65,40 @@ export async function deleteEvent(calendarName, eventId) {
 		console.log(`Error deleting event: ${error}`);
 	}
 }
+
 export async function addEvents(calendarName, title, description, timeStart, timeEnd) {
 	const spinner = createSpinner().start();
 	const start = parseDateTimeInput(timeStart);
 	const end = parseDateTimeInput(timeEnd);
+	console.log(start, end);
+	const requestBody =
+		timeStart === timeEnd
+			? // All Day Event Request
+			  {
+					summary: title,
+					description: description,
+					start: {
+						date: start.split("T")[0],
+					},
+					end: {
+						date: start.split("T")[0],
+					},
+			  }
+			: // Timed Event Request
+			  {
+					summary: title,
+					description: description,
+					start: {
+						dateTime: start,
+					},
+					end: {
+						dateTime: end,
+					},
+			  };
 	await calendar.events.insert({
 		calendarId: await calendarNameToId(calendarName),
 		auth: auth,
-		requestBody: {
-			summary: title,
-			description: description,
-			start: {
-				dateTime: start,
-				// timeZone: getTimezone(),
-			},
-			end: {
-				dateTime: end,
-				// timeZone: getTimezone(),
-			},
-		},
+		requestBody: requestBody,
 	});
 	spinner.success();
 	console.log(`Event successfully added to ${chalk.greenBright(calendarName)} calendar\n------------------------\n`);

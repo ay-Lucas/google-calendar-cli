@@ -27,24 +27,26 @@ program
 	.option("-C --calendar_objects", "list an array of calendar objects")
 	.option("-c, --calendars", "list of your calendar names")
 	.action(async (calName, options) => {
-		console.log(calName, options.number, options.calendars, options.calendar_objects);
 		calName = calName.toLowerCase();
+		// console.log(calName, options.number, options.calendars, options.calendar_objects);
 		if (calName === "calendars" || options.calendars) listCalendarNames();
-		// tasks
 		else if (calName === "tasks") {
 			if (options.detailed) listTasks(null, true, false);
 			else if (options.id) listTasks(null, false, true);
 			else listTasks(null, false, false);
 		} else if (calName === "task-lists") listTaskLists();
 		else if (calName === "events") {
-			if (calName === "events" && options.id) listEvents(options.number, "primary", true);
+			if (options.id) listEvents(options.number, "primary", true);
 			else listEvents(options.number, "primary", false);
 		} else if (calName === "calendar-objects" || options.calendar_objects) listCalendars();
-		else if (calNames.includes(calName) && options.id) listEvents(options.number, calName, true);
-		else listEvents(options.number, calName, false);
+		else if (typeChoices.includes(calName)) {
+			if (options.id) listEvents(options.number, calName, true);
+			else listEvents(options.number, calName, false);
+		} else listEvents(options.number, calName, false);
 	});
 program
 	.command("add")
+	.alias("add-event")
 	.description("add calendar event")
 	.addArgument(new Argument("[calName]", "the calendar to add an event to").default("primary"))
 	.addArgument(new Argument("[title]", "event title name").default("none"))
