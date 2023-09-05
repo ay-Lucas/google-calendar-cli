@@ -30,6 +30,13 @@ export const convertTimeZoneToUTC = (date) => {
 export const getDiffInDateTime = (dateTime1, dateTime2) => {
 	return dayjs(dateTime2).diff(dayjs(dateTime1), "hours");
 };
+export const addHour = (dateTime) => {
+	try {
+		return dayjs(dateTime).add(1, "hour");
+	} catch (error) {
+		console.log(`Error adding hour to time: ${error}`);
+	}
+};
 export function formatTime(string) {
 	let formattedDate = dayjs(string);
 	return formattedDate.format("LT");

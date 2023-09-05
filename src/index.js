@@ -52,7 +52,7 @@ program
 	.addArgument(new Argument("[title]", "event title name").default("none"))
 	.option("-d, --description <string>", "the description content")
 	.requiredOption("-s, --start <string>", "event start time", dayjs(new Date()).add(1, "hours").toISOString())
-	.requiredOption("-e, --end <string>", "event end time", dayjs(new Date()).add(2, "hours").toISOString())
+	.option("-e, --end <string>", "event end time")
 	.action(async (calName, title, options) => {
 		calName = calName.toLowerCase();
 		const calendar = calNames.find((name) => calName === name);

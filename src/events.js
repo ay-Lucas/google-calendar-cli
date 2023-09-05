@@ -3,7 +3,7 @@
 import chalk from "chalk";
 import { createSpinner } from "nanospinner";
 import { calendar, calendarNameToId } from "./calendar.js";
-import { formatDate, formatTime, getDiffInDateTime, getTimezone, parseDateTimeInput } from "./dates.js";
+import { addHour, formatDate, formatTime, getDiffInDateTime, getTimezone, parseDateTimeInput } from "./dates.js";
 import { auth } from "./googleauth.js";
 
 const handleFormat = (start, end, summary) => {
@@ -11,11 +11,14 @@ const handleFormat = (start, end, summary) => {
 	let hourDifference = getDiffInDateTime(start, end);
 	if (hourDifference === 24) {
 		time = `${formatDate(start)}`;
+	} else if (hourDifference === 0) {
+		time = `${formatDate(start)}`;
 	} else if (hourDifference < 5) {
 		time = `${formatDate(start)} - ${formatTime(end)}`;
 	} else {
 		time = `${formatDate(start)} - ${formatDate(end)}`;
 	}
+	console.log(hourDifference);
 	console.log(`${chalk.bgGrey(time)} \n${chalk.cyan(summary)}\n`);
 };
 export async function listEvents(num, calendarName, listId) {
@@ -69,8 +72,20 @@ export async function deleteEvent(calendarName, eventId) {
 export async function addEvents(calendarName, title, description, timeStart, timeEnd) {
 	const spinner = createSpinner().start();
 	const start = parseDateTimeInput(timeStart);
-	const end = parseDateTimeInput(timeEnd);
-	console.log(start, end);
+	console.log("start: " + timeStart, timeEnd);
+	let end;
+
+	if (!timeEnd || typeof timeEnd === "undefined" || timeEnd === "") {
+		end = parseDateTimeInput(timeStart);
+		// console.log("time end: " + timeEnd);
+	} else if (start === end && end.substring(0, 2) !== "00") {
+		end = parseDateTimeInput(timeEnd);
+		end = addHour(end);
+	} else {
+		end = parseDateTimeInput(timeEnd);
+	}
+	//TODO: am not working!
+	console.log("start: " + start, end);
 	const requestBody =
 		timeStart === timeEnd
 			? // All Day Event Request
