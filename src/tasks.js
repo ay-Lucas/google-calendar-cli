@@ -130,20 +130,20 @@ function sortTasks(arr) {
 	}
 	return arr;
 }
-export async function deleteTask(id) {
-	// if (isEmpty(id)) return;
+export async function deleteTask(idArray) {
 	const spinner = createSpinner().start();
-	// let date = parseDateTimeInput(dueDate);
 	const taskList = await getTasklist();
 	try {
-		await service.tasks.delete({
-			auth: auth,
-			tasklist: taskList[0].id,
-			task: id,
+		idArray.forEach((id) => {
+			service.tasks.delete({
+				auth: auth,
+				tasklist: taskList[0].id,
+				task: id,
+			});
 		});
+		console.log(`\n${idArray.length} Task${idArray.length > 1 ? "s" : ""} successfully deleted\n----------------------------`);
 	} catch (error) {
 		console.log(`Error deleting task: ${error}`);
 	}
 	spinner.success();
-	console.log("Task successfully deleted\n------------------------");
 }

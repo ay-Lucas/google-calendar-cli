@@ -4,7 +4,7 @@ import dayjs from "dayjs";
 import { getCalendarNames, listCalendarNames, listCalendars } from "./calendar.js";
 import { addEvents, deleteEvent, listEvents } from "./events.js";
 import { addTask, deleteTask, getTasklist, listTaskLists, listTasks } from "./tasks.js";
-import { doesUserDataFileExist, writeUserDataFile } from "./utils.js";
+import { doesUserDataFileExist, isEmpty, writeUserDataFile } from "./utils.js";
 let calNames, tasklistNames;
 if (doesUserDataFileExist()) {
 	calNames = await getCalendarNames();
@@ -47,11 +47,15 @@ program
 program
 	.command("add")
 	.alias("add-event")
-	.description("add calendar event")
+	.description("add calendar event. Only the start date or start date time is required.")
 	.addArgument(new Argument("[calName]", "the calendar to add an event to").default("primary"))
 	.addArgument(new Argument("[title]", "event title name").default("none"))
 	.option("-d, --description <string>", "the description content")
-	.requiredOption("-s, --start <string>", "event start time", dayjs(new Date()).add(1, "hours").toISOString())
+	.requiredOption(
+		"-s, --start <string>",
+		"event start time/date-time <M/D[/YY] [hh:mm]>. Date only will create an all-day event. Event length is set to 1 hour if a date-time is provided without an end time",
+		dayjs(new Date()).add(1, "hours").toISOString()
+	)
 	.option("-e, --end <string>", "event end time")
 	.action(async (calName, title, options) => {
 		calName = calName.toLowerCase();
@@ -67,9 +71,9 @@ program
 	});
 program
 	.command("add-task")
-	.description("add Google task to task list")
+	.description("Add Google Task to task list. Only dates are supported by Google Tasks API")
 	.argument("[title]", "task title name")
-	.requiredOption("-d, --due <string>", "event due date", dayjs(new Date()).add(1, "hours").toISOString())
+	.requiredOption("-d, --due <string>", "event due date <M/D[/YY]>", dayjs(new Date()).add(1, "hours").toISOString())
 	.action(async (title, options) => {
 		// console.log(title, options);
 		addTask(title, options.due);
@@ -84,10 +88,11 @@ program
 program
 	.command("delete-task")
 	.alias("dt")
-	.description("delete a task, must provide it's ID")
-	.argument("[id]", "task ID (look up with 'list tasks -detailed')")
-	.action(async (id) => {
-		deleteTask(id);
+	.description("Delete a task, must provide it's ID -- find it with `list tasks -id`. Separate IDs with a space to delete multiple tasks")
+	.argument("<id>", "task ID(s)")
+	.action(async () => {
+		const ids = process.argv.slice(3);
+		deleteTask(ids);
 	});
 program
 	.command("delete-event")
