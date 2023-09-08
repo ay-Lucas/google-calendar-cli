@@ -16,6 +16,9 @@ const dateRegEx = new RegExp(/^\d{4}(\/|-)(0[1-9]|1[012])(\/|-)(0[1-9]|[12][0-9]
 export const formatDate = (str) => {
 	const dateObj = dayjs(str);
 	const hoursLeft = dateObj.get("hours");
+	// console.log(dateObj);
+	// console.log(dateRegEx.test(str));
+	// console.log(str);
 	if (dateRegEx.test(str) || hoursLeft < 1) {
 		return dateObj.format("M/D dddd");
 	} else {

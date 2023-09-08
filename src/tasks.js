@@ -50,6 +50,15 @@ async function taskListNameToId(taskListName) {
 	}
 }
 const handleFormat = (dueDate, title) => {
+	// console.log(dueDate);
+	if (dueDate.includes("T")) {
+		const dateTimeArr = dueDate.split("T");
+		const time = dateTimeArr[1];
+		const date = dateTimeArr[0];
+		if (time.substring(0, 5) === "00:00") {
+			dueDate = date;
+		}
+	}
 	console.log(`${chalk.bgGrey(formatDate(dueDate))} \n${chalk.cyan(title)}\n`);
 };
 export async function listTasks(taskListName, isDetailed, listId) {
