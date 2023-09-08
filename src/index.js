@@ -3,8 +3,8 @@ import { Argument, Command } from "commander";
 import dayjs from "dayjs";
 import { getCalendarNames, listCalendarNames, listCalendars } from "./calendar.js";
 import { addEvents, deleteEvent, listEvents } from "./events.js";
-import { addTask, deleteTask, getTasklist, listTaskLists, listTasks } from "./tasks.js";
-import { doesUserDataFileExist, isEmpty, writeUserDataFile } from "./utils.js";
+import { addTask, completeTasks, deleteTask, getTasklist, listTaskLists, listTasks } from "./tasks.js";
+import { doesUserDataFileExist, writeUserDataFile } from "./utils.js";
 let calNames, tasklistNames;
 if (doesUserDataFileExist()) {
 	calNames = await getCalendarNames();
@@ -26,12 +26,14 @@ program
 	.option("-n, --number <number>", "number of items to list", 10)
 	.option("-C --calendar_objects", "list an array of calendar objects")
 	.option("-c, --calendars", "list of your calendar names")
+	.option("-A, show_completed", "include completed tasks")
 	.action(async (calName, options) => {
 		calName = calName.toLowerCase();
 		// console.log(calName, options.number, options.calendars, options.calendar_objects);
 		if (calName === "calendars" || options.calendars) listCalendarNames();
 		else if (calName === "tasks") {
 			if (options.detailed) listTasks(null, true, false);
+			else if (options.show_completed) listTasks(null, false, options.id, options.show_completed);
 			else if (options.id) listTasks(null, false, true);
 			else listTasks(null, false, false);
 		} else if (calName === "task-lists" || calName === tasklistNames.toLowerCase()) listTaskLists();
@@ -103,5 +105,21 @@ program
 	// .requiredOption("-c, --calendar <string>", "calendar name", "primary")
 	.action(async (id, calendar) => {
 		deleteEvent(id, calendar);
+	});
+program
+	.command("complete")
+	.alias("complete-task", "comp")
+	.description("Complete a task, must provide it's ID -- find it with `list tasks -id`. Separate IDs with a space to complete multiple tasks")
+	.argument("<id>", "task ID(s)")
+	.option("-d, --date", "Date of task completion. Only use with one task at a time")
+	.action(async (id, option) => {
+		const ids = process.argv.slice(3);
+		if (option.date) {
+			if (ids.length > 1) {
+				console.log("Completion Date can only used with one task at a time. Action aborted");
+			}
+			completeTasks(ids);
+		}
+		completeTasks(ids);
 	});
 program.parse(process.argv);

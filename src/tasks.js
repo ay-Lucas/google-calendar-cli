@@ -3,7 +3,7 @@ import dayjs from "dayjs";
 import fsPromise from "fs/promises";
 import { createSpinner } from "nanospinner";
 import { user_data_path } from "./calendar.js";
-import { formatDate, parseDateTimeInput } from "./dates.js";
+import { formatDate, getCurrentTime, parseDateTimeInput } from "./dates.js";
 import { auth, google } from "./googleauth.js";
 const service = google.tasks({ version: "v1", auth });
 
@@ -51,17 +51,20 @@ async function taskListNameToId(taskListName) {
 }
 const handleFormat = (dueDate, title) => {
 	// console.log(dueDate);
-	if (dueDate.includes("T")) {
-		const dateTimeArr = dueDate.split("T");
-		const time = dateTimeArr[1];
-		const date = dateTimeArr[0];
-		if (time.substring(0, 5) === "00:00") {
-			dueDate = date;
+	if (typeof dueDate === "string") {
+		if (dueDate.includes("T")) {
+			const dateTimeArr = dueDate.split("T");
+			const time = dateTimeArr[1];
+			const date = dateTimeArr[0];
+			if (time.substring(0, 5) === "00:00") {
+				dueDate = date;
+			}
 		}
 	}
-	console.log(`${chalk.bgGrey(formatDate(dueDate))} \n${chalk.cyan(title)}\n`);
+	console.log(`${chalk.bgGrey(formatDate(dueDate))} \n${chalk.cyan(title)}`);
 };
-export async function listTasks(taskListName, isDetailed, listId) {
+export async function listTasks(taskListName, isDetailed, listId, includeCompleted) {
+	if (typeof includeCompleted !== "boolean") includeCompleted = false;
 	let id;
 	if (!taskListName) {
 		const taskList = await getTasklist();
@@ -72,16 +75,22 @@ export async function listTasks(taskListName, isDetailed, listId) {
 	try {
 		const res = await service.tasks.list({
 			tasklist: id,
-			showCompleted: false,
+			showCompleted: includeCompleted,
+			showHidden: includeCompleted,
 			showDeleted: false,
 		});
 		const tasks = await sortTasks(res.data.items);
 		if (tasks && tasks.length) {
 			console.log(chalk.greenBright.bold("Google Tasks: ") + "\n");
-			tasks.forEach((task) => {
+			// const uncompletedTasks = await tasks.filter((task) => task.status === "completed");
+			await tasks.forEach((task) => {
 				if (isDetailed) console.log(task);
-				if (listId) console.log(`Task ID: ${chalk.green(task.id)}`);
+				// console.log(task.due);
+				// console.log(task);
+
 				handleFormat(task.due, task.title);
+				if (listId) console.log(`Task ID: ${chalk.green(task.id)}`);
+				console.log("----------------------------");
 			});
 		} else {
 			console.log("No task lists found.");
@@ -144,6 +153,30 @@ export async function deleteTask(idArray) {
 		console.log(`\n${idArray.length} Task${idArray.length > 1 ? "s" : ""} successfully deleted\n----------------------------`);
 	} catch (error) {
 		console.log(`Error deleting task: ${error}`);
+	}
+	spinner.success();
+}
+export async function completeTasks(idArray) {
+	const spinner = createSpinner().start();
+	const taskList = await getTasklist();
+	const time = await getCurrentTime();
+	try {
+		await idArray.forEach((id) => {
+			service.tasks.update({
+				auth: auth,
+				tasklist: taskList[0].id,
+				task: id,
+				requestBody: {
+					id: id,
+					completed: time,
+					status: "completed",
+					hidden: true,
+				},
+			});
+		});
+		console.log(`\n${idArray.length} Task${idArray.length > 1 ? "s" : ""} marked as complete\n----------------------------`);
+	} catch (error) {
+		console.log(`Error completing task: ${error}`);
 	}
 	spinner.success();
 }

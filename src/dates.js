@@ -47,6 +47,9 @@ export function formatTime(string) {
 export function getTimezone() {
 	return dayjs.tz.guess();
 }
+export function getCurrentTime() {
+	return dayjs().format("YYYY-MM-DDTHH:mm:ssZ");
+}
 function parseHours(time) {
 	return parseInt(time.split(":", 1)[0]);
 }
