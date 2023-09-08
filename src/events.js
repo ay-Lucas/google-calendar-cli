@@ -6,19 +6,16 @@ import { calendar, calendarNameToId } from "./calendar.js";
 import { addHour, formatDate, formatTime, getDiffInDateTime, getTimezone, parseDateTimeInput } from "./dates.js";
 import { auth } from "./googleauth.js";
 
-const handleFormat = (start, end, summary) => {
+const handlePrint = (start, end, summary) => {
 	let time;
 	let hourDifference = getDiffInDateTime(start, end);
-	if (hourDifference === 24) {
-		time = `${formatDate(start)}`;
-	} else if (hourDifference === 0) {
+	if (hourDifference === 24 || hourDifference === 0) {
 		time = `${formatDate(start)}`;
 	} else if (hourDifference < 5) {
 		time = `${formatDate(start)} - ${formatTime(end)}`;
 	} else {
 		time = `${formatDate(start)} - ${formatDate(end)}`;
 	}
-	console.log(hourDifference);
 	console.log(`${chalk.bgGrey(time)} \n${chalk.cyan(summary)}\n`);
 };
 export async function listEvents(num, calendarName, listId) {
@@ -50,7 +47,7 @@ export async function listEvents(num, calendarName, listId) {
 			const start = event.start.dateTime || event.start.date;
 			const end = event.end.dateTime || event.end.date;
 			const summary = event.summary;
-			handleFormat(start, end, summary);
+			handlePrint(start, end, summary);
 		});
 	} catch (error) {
 		spinner.error();
@@ -68,48 +65,45 @@ export async function deleteEvent(calendarName, eventId) {
 		console.log(`Error deleting event: ${error}`);
 	}
 }
-
 export async function addEvents(calendarName, title, description, timeStart, timeEnd) {
 	const spinner = createSpinner().start();
 	const start = parseDateTimeInput(timeStart);
-	console.log("start: " + timeStart, timeEnd);
+	const dateTimeArr = start.split("T");
+	const date = dateTimeArr[0];
+	const time = dateTimeArr[1];
+	const isEventAllDay = time.substring(0, 2) === "00" && typeof timeEnd === "undefined";
 	let end;
-
-	if (!timeEnd || typeof timeEnd === "undefined" || timeEnd === "") {
+	if (isEventAllDay) {
 		end = parseDateTimeInput(timeStart);
-		// console.log("time end: " + timeEnd);
-	} else if (start === end && end.substring(0, 2) !== "00") {
-		end = parseDateTimeInput(timeEnd);
+	} else if (typeof timeEnd === "undefined") {
+		end = parseDateTimeInput(timeStart);
 		end = addHour(end);
 	} else {
 		end = parseDateTimeInput(timeEnd);
 	}
-	//TODO: am not working!
-	console.log("start: " + start, end);
-	const requestBody =
-		timeStart === timeEnd
-			? // All Day Event Request
-			  {
-					summary: title,
-					description: description,
-					start: {
-						date: start.split("T")[0],
-					},
-					end: {
-						date: start.split("T")[0],
-					},
-			  }
-			: // Timed Event Request
-			  {
-					summary: title,
-					description: description,
-					start: {
-						dateTime: start,
-					},
-					end: {
-						dateTime: end,
-					},
-			  };
+	// console.log(`start: ${start}, ${end}, ${date}`);
+	const requestBody = isEventAllDay
+		? {
+				summary: title,
+				description: description,
+				start: {
+					date: date,
+				},
+				end: {
+					date: date,
+				},
+		  }
+		: // Timed Event Request
+		  {
+				summary: title,
+				description: description,
+				start: {
+					dateTime: start,
+				},
+				end: {
+					dateTime: end,
+				},
+		  };
 	await calendar.events.insert({
 		calendarId: await calendarNameToId(calendarName),
 		auth: auth,
@@ -117,5 +111,5 @@ export async function addEvents(calendarName, title, description, timeStart, tim
 	});
 	spinner.success();
 	console.log(`Event successfully added to ${chalk.greenBright(calendarName)} calendar\n------------------------\n`);
-	handleFormat(start, end, title);
+	handlePrint(start, end, title);
 }

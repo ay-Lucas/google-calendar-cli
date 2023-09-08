@@ -34,7 +34,7 @@ program
 			if (options.detailed) listTasks(null, true, false);
 			else if (options.id) listTasks(null, false, true);
 			else listTasks(null, false, false);
-		} else if (calName === "task-lists") listTaskLists();
+		} else if (calName === "task-lists" || calName === tasklistNames.toLowerCase()) listTaskLists();
 		else if (calName === "events") {
 			if (options.id) listEvents(options.number, "primary", true);
 			else listEvents(options.number, "primary", false);

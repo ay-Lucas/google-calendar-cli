@@ -87,7 +87,6 @@ export async function addTask(title, dueDate) {
 	const splitDate = date.split("T");
 	const dateOnly = splitDate[0];
 	const timeOnly = splitDate[1];
-	console.log(date);
 	if (timeOnly.substring(0, 2) !== "00") {
 		console.log("Google Tasks API currently only supports a due date.\nThe task will be assigned the due date you provided.");
 	}

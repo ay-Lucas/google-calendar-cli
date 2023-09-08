@@ -63,7 +63,7 @@ function checkAmPm(string) {
 function parseAm(time) {
 	let str = time.endsWith("am") ? "am" : "a";
 	let h = parseInt(time.split(str)[0]);
-	return h + 12 > 23 ? 0 : h + 12;
+	return h + 12 > 23 ? 0 : h;
 }
 function parsePm(time) {
 	let str = time.endsWith("pm") ? "pm" : "p";
@@ -73,9 +73,10 @@ function parsePm(time) {
 function handleNoMinutes(time) {
 	let hour, minutes;
 	time = time.toLowerCase();
-	if (checkAmPm(time) === "pm") {
+	const symbol = checkAmPm(time);
+	if (symbol === "pm") {
 		hour = parsePm(time);
-	} else if (checkAmPm(time) === "am") {
+	} else if (symbol === "am") {
 		hour = parseAm(time);
 	}
 	minutes = 0;
@@ -116,7 +117,6 @@ export function parseDateTimeInput(input) {
 			let arr = [];
 			if (checkAmPm(split[2]) === false && checkAmPm(split[1]) === false) return;
 			let temp = split.findIndex((element) => checkAmPm(element) === "am" || checkAmPm(element) === "pm");
-			// console.log(temp);
 			for (let i = 0; i < split.length; i++) {
 				if (i === temp) {
 					continue;
@@ -134,15 +134,12 @@ export function parseDateTimeInput(input) {
 		split = timeIndex > 0 ? split.reverse() : split;
 		time = split[0];
 		[hour, minutes] = handleTime(time);
-		// console.log(hour, minutes);
-
 		date = parseDateOnly(split[1]);
 		let dateStr = dayjs(date);
 		dateStr = dateStr.tz(getTimezone());
 		try {
 			formattedDate = dateStr.set("hours", hour).set("minutes", minutes);
 			formattedDate = formattedDate.format("YYYY-MM-DDTHH:mm:ssZ");
-			console.log("formatted Date Time: " + formattedDate);
 			return formattedDate;
 		} catch (error) {
 			console.log(`Daysjs date parsing error ${error}`);
@@ -151,7 +148,6 @@ export function parseDateTimeInput(input) {
 		try {
 			let date = parseDateOnly(trimmedStr);
 			formattedDate = dayjs(date).format("YYYY-MM-DDTHH:mm:ssZ");
-			// console.log("formatted Date: " + formattedDate);
 			return formattedDate;
 		} catch (error) {
 			console.log(`Daysjs date parsing error ${error}`);
