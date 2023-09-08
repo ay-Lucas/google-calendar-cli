@@ -51,7 +51,7 @@ export function getCurrentTime() {
 	return dayjs().format("YYYY-MM-DDTHH:mm:ssZ");
 }
 function parseHours(time) {
-	return parseInt(time.split(":", 1)[0]);
+	return parseInt(time.split(":")[0]);
 }
 function parseMinutes(time) {
 	return time.split(":")[1];
@@ -96,15 +96,17 @@ function handleTime(time) {
 	}
 	hour = parseHours(time);
 	minutes = parseMinutes(time);
+	// console.log(`hour: ${hour} minutes: ${minutes}`);
 
 	minutes = minutes.toLowerCase();
 	if (checkAmPm(minutes) === "pm") {
 		str = minutes.endsWith("pm") ? "pm" : "p";
-		hour = hour + 12 > 23 ? 0 : hour + 12;
+		hour = hour + 12 > 23 ? hour : hour + 12;
 	} else if (checkAmPm(minutes) === "am") {
 		str = minutes.endsWith("am") ? "am" : "a";
 	}
 	minutes = parseInt(minutes.split(str, 1)[0]);
+
 	return [hour, minutes];
 }
 /*
