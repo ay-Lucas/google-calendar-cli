@@ -7,6 +7,7 @@ import { addEvents, deleteEvent, listEvents } from "./events.js";
 import { addTask, completeTasks, deleteTask, listTaskLists, listTasks, taskList1Name } from "./tasks.js";
 import { writeUserDataFile } from "./utils.js";
 //TODO: list all events with `gcal list events` command
+// delete events and tasks with an index number
 const typeChoices = ["events", "calendars", "calendar-objects", "tasks", "task-lists", "primary"].concat(calendarNames).concat(taskList1Name);
 
 const program = new Command();
@@ -18,7 +19,7 @@ program
 	.addArgument(new Argument("[calName]", "the calendar to list from").choices(typeChoices).default("primary"))
 	.option("-D, --detailed", "detailed list of tasks")
 	.option("-id --id", "include item ID")
-	.option("-n, --number <number>", "number of items to list", 10)
+	.option("-n, --number <number>", "number of items to list", -1)
 	.option("-C --calendar_objects", "list an array of calendar objects")
 	.option("-c, --calendars", "list of your calendar names")
 	.option("-A, show_completed", "include completed tasks")
