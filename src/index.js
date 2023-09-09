@@ -103,11 +103,11 @@ program
 			calendarNames.forEach((name) => console.log(chalk.cyan(name)));
 			return;
 		}
-		const calendarInput = args.splice(calendarNameIndex, 1);
+		const calName = args.splice(calendarNameIndex, 1);
 		// console.log(args);
 		// console.log(calendarInput);
 		// console.log(calendarNames);
-		await deleteEvent(args, calendarInput[0]);
+		await deleteEvent(args, calName[0]);
 	});
 program
 	.command("complete")
