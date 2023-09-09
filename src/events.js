@@ -43,7 +43,7 @@ export async function listEvents(num, calendarName, listId) {
 		// eslint-disable-next-line no-unused-vars
 		console.log(`${chalk.greenBright.bold(calendarName + " calendar:")}\n`);
 		events.map((event, i) => {
-			if (listId) console.log(`Task ID: ${chalk.green(event.id)}`);
+			if (listId) console.log(`Event ID: ${chalk.green(event.id)}`);
 			const start = event.start.dateTime || event.start.date;
 			const end = event.end.dateTime || event.end.date;
 			const summary = event.summary;
@@ -54,16 +54,23 @@ export async function listEvents(num, calendarName, listId) {
 		console.log(`list events API error ${error}`);
 	}
 }
-export async function deleteEvent(calendarName, eventId) {
+export async function deleteEvent(eventId, calendarName) {
+	const spinner = createSpinner().start();
+	const calendarId = await calendarNameToId(calendarName);
 	try {
-		await calendar.events.delete({
-			auth: auth,
-			calendarId: await calendarNameToId(calendarName),
-			id: eventId,
+		eventId.forEach((id) => {
+			calendar.events.delete({
+				auth: auth,
+				calendarId: calendarId,
+				eventId: id,
+			});
 		});
 	} catch (error) {
 		console.log(`Error deleting event: ${error}`);
+		spinner.error();
 	}
+	console.log(`\n${eventId.length} Event${eventId.length > 1 ? "s" : ""} successfully deleted\n----------------------------`);
+	spinner.success();
 }
 export async function addEvents(calendarName, title, description, timeStart, timeEnd) {
 	const spinner = createSpinner().start();

@@ -6,7 +6,9 @@ import { user_data_path } from "./calendar.js";
 import { formatDate, getCurrentTime, parseDateTimeInput } from "./dates.js";
 import { auth, google } from "./googleauth.js";
 const service = google.tasks({ version: "v1", auth });
-
+const taskList = await getTasklist();
+const obj = await taskList[0];
+export const taskList1Name = obj.title;
 export async function listTaskLists() {
 	const service = google.tasks({ version: "v1", auth });
 	const res = await service.tasklists.list({

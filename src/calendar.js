@@ -56,7 +56,7 @@ async function getCalID(calendarName) {
 	return id;
 }
 
-export async function getCalendarNames() {
+async function getCalendarNames() {
 	let arr = [];
 	try {
 		const info = await fsPromise.readFile(user_data_path);
@@ -74,6 +74,7 @@ export async function getCalendarNames() {
 
 	return arr;
 }
+export const calendarNames = await getCalendarNames();
 export async function listCalendarNames() {
 	const names = await getCalendarNames();
 	console.log(`(${chalk.cyan(names.length)}) Calendar Names: \n`);

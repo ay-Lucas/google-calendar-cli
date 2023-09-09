@@ -1,21 +1,16 @@
 #!/usr/bin/env node
+import chalk from "chalk";
 import { Argument, Command } from "commander";
 import dayjs from "dayjs";
-import { getCalendarNames, listCalendarNames, listCalendars } from "./calendar.js";
+import { calendarNames, listCalendarNames, listCalendars } from "./calendar.js";
 import { addEvents, deleteEvent, listEvents } from "./events.js";
-import { addTask, completeTasks, deleteTask, getTasklist, listTaskLists, listTasks } from "./tasks.js";
-import { doesUserDataFileExist, writeUserDataFile } from "./utils.js";
-let calNames, tasklistNames;
-if (doesUserDataFileExist()) {
-	calNames = await getCalendarNames();
-	tasklistNames = await getTasklist();
-	tasklistNames = tasklistNames[0].title;
-}
-const typeChoices = ["events", "calendars", "calendar-objects", "tasks", "task-lists", "primary"].concat(calNames).concat(tasklistNames);
+import { addTask, completeTasks, deleteTask, listTaskLists, listTasks, taskList1Name } from "./tasks.js";
+import { writeUserDataFile } from "./utils.js";
+//TODO: list all events with `gcal list events` command
+const typeChoices = ["events", "calendars", "calendar-objects", "tasks", "task-lists", "primary"].concat(calendarNames).concat(taskList1Name);
 
 const program = new Command();
 program.name("google-calendar-cli").description("CLI for google calendar").version("0.0.1");
-
 program
 	.command("list")
 	.alias("ls")
@@ -29,14 +24,13 @@ program
 	.option("-A, show_completed", "include completed tasks")
 	.action(async (calName, options) => {
 		calName = calName.toLowerCase();
-		// console.log(calName, options.number, options.calendars, options.calendar_objects);
 		if (calName === "calendars" || options.calendars) listCalendarNames();
 		else if (calName === "tasks") {
 			if (options.detailed) listTasks(null, true, false);
 			else if (options.show_completed) listTasks(null, false, options.id, options.show_completed);
 			else if (options.id) listTasks(null, false, true);
 			else listTasks(null, false, false);
-		} else if (calName === "task-lists" || calName === tasklistNames.toLowerCase()) listTaskLists();
+		} else if (calName === "task-lists" || calName === taskList1Name.toLowerCase()) listTaskLists();
 		else if (calName === "events") {
 			if (options.id) listEvents(options.number, "primary", true);
 			else listEvents(options.number, "primary", false);
@@ -60,9 +54,7 @@ program
 	)
 	.option("-e, --end <string>", "event end time")
 	.action(async (calName, title, options) => {
-		calName = calName.toLowerCase();
-		const calendar = calNames.find((name) => calName === name);
-		// console.log(calName, title, options.description, parseDate(options.start), parseDate(options.end));
+		const calendar = calendarNames.find((name) => calName.toLowerCase() === name);
 		if (calendar !== undefined) {
 			calName = calendar;
 		} else {
@@ -101,10 +93,20 @@ program
 	.alias("de")
 	.description("delete an event, must provide it's ID and calendar name")
 	.argument("[id]", "Event ID (look up with 'list events -detailed')")
-	.argument("[calendar]", "calendar name", "primary")
-	// .requiredOption("-c, --calendar <string>", "calendar name", "primary")
-	.action(async (id, calendar) => {
-		deleteEvent(id, calendar);
+	.argument("[calendar]", "calendar name", "general")
+	.action(async () => {
+		const args = process.argv.slice(3);
+		const calendarNameIndex = args.findIndex((element) => calendarNames.includes(element.toLowerCase()));
+		if (calendarNameIndex === -1) {
+			console.log(`${chalk.red("Error.")} Enter a calendar name from the following list: `);
+			calendarNames.forEach((name) => console.log(chalk.cyan(name)));
+			return;
+		}
+		const calendarInput = args.splice(calendarNameIndex, 1);
+		// console.log(args);
+		// console.log(calendarInput);
+		// console.log(calendarNames);
+		await deleteEvent(args, calendarInput[0]);
 	});
 program
 	.command("complete")
