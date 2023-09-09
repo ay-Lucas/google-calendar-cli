@@ -17,8 +17,8 @@ const handlePrint = (start, end, summary, i, id) => {
 		time = `${formatDate(start)} - ${formatDate(end)}`;
 	}
 
-	console.log(`${id !== false ? chalk.green(i) + " " : ""}${chalk.bgGray(summary)}\n${chalk.cyan(time)}`);
-	if (id !== false) console.log(`Event ID: ${chalk.green(id)}`);
+	console.log(`${typeof id === "string" ? chalk.green(i) + " " : ""}${chalk.bgGray(summary)}\n${chalk.cyan(time)}`);
+	if (typeof id === "string") console.log(`Event ID: ${chalk.green(id)}`);
 	console.log("----------------------------");
 };
 export async function listEvents(num, calendarName, doListId) {
@@ -50,33 +50,33 @@ export async function deleteEvent(eventIdArray, calendarName) {
 		const events = await getEvents(null, calendarId);
 		let arr = [];
 		for (let i = 0; i < indexArray.length; i++) {
-			if (indexArray[i] > events.length) {
+			if (indexArray[i] > events.length - 1) {
 				console.log(chalk.red(`${calendarName} event ${indexArray[i]} cannot be found`));
-				throw new Error();
+				throw new Error("An invalid index was provided");
 			}
+			console.log(events.length);
 			arr.push(events[indexArray[i]].id);
 		}
 		eventIdArray = arr;
 	}
-	console.log(eventIdArray);
 	try {
-		eventIdArray.forEach((id) => {
-			calendar.events.delete({
-				auth: auth,
-				calendarId: calendarId,
-				eventId: id,
-			});
+		await eventIdArray.forEach(async (id) => {
+			await postDeleteEvent(id, calendarId);
 		});
+		console.log(`\n${eventIdArray.length} Event${eventIdArray.length > 1 ? "s" : ""} successfully deleted\n----------------------------`);
 	} catch (error) {
 		console.log(`Error deleting event: ${error}`);
 		spinner.error();
 	}
-	console.log(`\n${eventIdArray.length} Event${eventIdArray.length > 1 ? "s" : ""} successfully deleted\n----------------------------`);
 	spinner.success();
 }
-// export function deleteEventsWithNumber(numArray, calendarName){
-// 	const
-// }
+async function postDeleteEvent(id, calendarId) {
+	calendar.events.delete({
+		auth: auth,
+		calendarId: calendarId,
+		eventId: id,
+	});
+}
 async function getEvents(num, calendarId) {
 	const maxResults = 250;
 	num = parseInt(num);
