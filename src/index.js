@@ -2,15 +2,30 @@
 import chalk from "chalk";
 import { Argument, Command } from "commander";
 import dayjs from "dayjs";
+import readline from "readline";
 import { calendarNames, listCalendarNames, listCalendars } from "./calendar.js";
 import { addEvents, deleteEvent, listEvents } from "./events.js";
-import { addTask, completeTasks, deleteTask, listTaskLists, listTasks, taskList1Name } from "./tasks.js";
+import { addTask, completeTasks, deleteTask, listTaskLists, listTasks, taskList1Name, taskListNames } from "./tasks.js";
 import { writeUserDataFile } from "./utils.js";
 //TODO: list all events with `gcal list events` command
-// delete events and tasks with an index number
-const typeChoices = ["events", "calendars", "calendar-objects", "tasks", "task-lists", "primary"].concat(calendarNames).concat(taskList1Name);
+
+const getInputKeypress = async (msg) => {
+	var keyPressed;
+	const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+	const prompt = async (query) => new Promise((resolve) => rl.question(query, resolve));
+	process.stdin.on("keypress", async (str, key) => {
+		rl.close();
+		keyPressed = key;
+	});
+	await prompt(msg + "\n");
+	return keyPressed;
+};
+const typeChoices = ["events", "calendars", "calendar-objects", "tasks", "task-lists", "primary"].concat(calendarNames).concat(taskListNames);
+const delEventMsg = chalk.green("\nOR Press Enter to use the Primary/General Calendar");
+const delTaskMsg = chalk.green("\nOR Press Enter to use the default Task List");
 
 const program = new Command();
+
 program.name("google-calendar-cli").description("CLI for google calendar").version("0.0.1");
 program
 	.command("list")
@@ -70,7 +85,6 @@ program
 	.argument("[title]", "task title name")
 	.requiredOption("-d, --due <string>", "event due date <M/D[/YY]>", dayjs(new Date()).add(1, "hours").toISOString())
 	.action(async (title, options) => {
-		// console.log(title, options);
 		addTask(title, options.due);
 	});
 
@@ -86,8 +100,18 @@ program
 	.description("Delete a task, must provide it's ID -- find it with `list tasks -id`. Separate IDs with a space to delete multiple tasks")
 	.argument("<id>", "task ID(s)")
 	.action(async () => {
-		const ids = process.argv.slice(3);
-		deleteTask(ids);
+		const args = process.argv.slice(3);
+		const taskListNameIndex = args.findIndex((element) => taskListNames.includes(element.toLowerCase()));
+		if (taskListNameIndex === -1) {
+			console.log("Enter a Task List name (after the task ID or index) from the following list: ");
+			taskListNames.forEach((name) => console.log("\u2022 " + chalk.cyan(name)));
+			const keyPressed = await getInputKeypress(delTaskMsg);
+			if (keyPressed.name !== "return") return;
+			await deleteTask(args, taskList1Name);
+		} else {
+			const taskListName = args.splice(taskListNameIndex, 1);
+			await deleteTask(args, taskListName[0]);
+		}
 	});
 program
 	.command("delete-event")
@@ -99,15 +123,15 @@ program
 		const args = process.argv.slice(3);
 		const calendarNameIndex = args.findIndex((element) => calendarNames.includes(element.toLowerCase()));
 		if (calendarNameIndex === -1) {
-			console.log(`${chalk.red("Error.")} Enter a calendar name from the following list: `);
-			calendarNames.forEach((name) => console.log(chalk.cyan(name)));
-			return;
+			console.log("Enter a Calendar name (after the event ID or index) from the following list: ");
+			calendarNames.forEach((name) => console.log("\u2022 " + chalk.cyan(name)));
+			const keyPressed = await getInputKeypress(delEventMsg);
+			if (keyPressed.name !== "return") return;
+			await deleteEvent(args, "general");
+		} else {
+			const calName = args.splice(calendarNameIndex, 1);
+			await deleteEvent(args, calName[0]);
 		}
-		const calName = args.splice(calendarNameIndex, 1);
-		// console.log(args);
-		// console.log(calendarInput);
-		// console.log(calendarNames);
-		await deleteEvent(args, calName[0]);
 	});
 program
 	.command("complete")

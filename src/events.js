@@ -32,7 +32,6 @@ export async function listEvents(num, calendarName, doListId) {
 
 	console.log(`${chalk.greenBright.bold(calendarName + " calendar:")}\n`);
 	events.map((event, i) => {
-		// if (num > 1 && num !== 250) console.log(i);
 		const start = event.start.dateTime || event.start.date;
 		const end = event.end.dateTime || event.end.date;
 		const summary = event.summary;
@@ -46,7 +45,6 @@ export async function deleteEvent(eventIdArray, calendarName) {
 	const isIndexArray = eventIdArray.every((element) => !isNaN(parseInt(element)));
 	if (isIndexArray) {
 		const indexArray = await bubbleSort(eventIdArray);
-		// console.log(indexArray);
 		const events = await getEvents(null, calendarId);
 		let arr = [];
 		for (let i = 0; i < indexArray.length; i++) {
@@ -54,7 +52,6 @@ export async function deleteEvent(eventIdArray, calendarName) {
 				console.log(chalk.red(`${calendarName} event ${indexArray[i]} cannot be found`));
 				throw new Error("An invalid index was provided");
 			}
-			console.log(events.length);
 			arr.push(events[indexArray[i]].id);
 		}
 		eventIdArray = arr;
@@ -63,12 +60,12 @@ export async function deleteEvent(eventIdArray, calendarName) {
 		await eventIdArray.forEach(async (id) => {
 			await postDeleteEvent(id, calendarId);
 		});
-		console.log(`\n${eventIdArray.length} Event${eventIdArray.length > 1 ? "s" : ""} successfully deleted\n----------------------------`);
+		spinner.success();
+		console.log(`${eventIdArray.length} Event${eventIdArray.length > 1 ? "s" : ""} successfully deleted\n----------------------------`);
 	} catch (error) {
 		console.log(`Error deleting event: ${error}`);
 		spinner.error();
 	}
-	spinner.success();
 }
 async function postDeleteEvent(id, calendarId) {
 	calendar.events.delete({
@@ -110,7 +107,6 @@ export async function addEvents(calendarName, title, description, timeStart, tim
 	} else {
 		end = parseDateTimeInput(timeEnd);
 	}
-	// console.log(`start: ${start}, ${end}, ${date}`);
 	const requestBody = isEventAllDay
 		? {
 				summary: title,

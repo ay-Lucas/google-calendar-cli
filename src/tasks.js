@@ -5,10 +5,20 @@ import { createSpinner } from "nanospinner";
 import { user_data_path } from "./calendar.js";
 import { formatDate, getCurrentTime, parseDateTimeInput } from "./dates.js";
 import { auth, google } from "./googleauth.js";
+import { bubbleSort } from "./utils.js";
 const service = google.tasks({ version: "v1", auth });
 const taskList = await getTasklist();
 const obj = await taskList[0];
 export const taskList1Name = obj.title;
+export const taskListNames = await getTaskListNames();
+async function getTaskListNames() {
+	const taskList = await getTasklist();
+	let arr = [];
+	taskList.forEach((task) => {
+		arr.push(task.title.toLowerCase());
+	});
+	return arr;
+}
 export async function listTaskLists() {
 	const service = google.tasks({ version: "v1", auth });
 	const res = await service.tasklists.list({
@@ -31,7 +41,6 @@ export async function getTasklist() {
 		const info = await fsPromise.readFile(user_data_path);
 		const data = JSON.parse(info);
 		const tasks = data.task_list;
-		// console.log(tasks);
 		return tasks;
 	} catch (error) {
 		console.log("failed to retrieve task list");
@@ -39,10 +48,11 @@ export async function getTasklist() {
 }
 async function taskListNameToId(taskListName) {
 	try {
-		const tasks = getTasklist();
+		let id;
+		const tasks = await getTasklist();
 		tasks.forEach((task) => {
 			if (taskListName.toLowerCase() === task.title.toLowerCase()) {
-				id = calendar.id;
+				id = task.id;
 				return;
 			}
 		});
@@ -51,8 +61,24 @@ async function taskListNameToId(taskListName) {
 		console.log("tasklist name to Id error");
 	}
 }
-const handleFormat = (dueDate, title) => {
-	// console.log(dueDate);
+async function getTasks(num, taskListId, includeCompleted) {
+	const maxResults = 100;
+	num = parseInt(num);
+	if (typeof num !== "number" || num < 1 || isNaN(num)) num = maxResults;
+	try {
+		const res = await service.tasks.list({
+			tasklist: taskListId,
+			showCompleted: includeCompleted,
+			showHidden: includeCompleted,
+			showDeleted: false,
+			maxResults: num,
+		});
+		return res.data.items;
+	} catch (error) {
+		throw new Error(`list tasks API error ${error}`);
+	}
+}
+const handleFormat = (dueDate, title, index, id) => {
 	if (typeof dueDate === "string") {
 		if (dueDate.includes("T")) {
 			const dateTimeArr = dueDate.split("T");
@@ -63,7 +89,9 @@ const handleFormat = (dueDate, title) => {
 			}
 		}
 	}
-	console.log(`${chalk.bgGrey(formatDate(dueDate))} \n${chalk.cyan(title)}`);
+	console.log(`${id ? chalk.green(index) + " " : ""}${chalk.bgGray(title)}\n${chalk.cyan(formatDate(dueDate))}`);
+	if (id) console.log(`Event ID: ${chalk.green(id)}`);
+	console.log("----------------------------");
 };
 export async function listTasks(taskListName, isDetailed, listId, includeCompleted) {
 	if (typeof includeCompleted !== "boolean") includeCompleted = false;
@@ -84,15 +112,9 @@ export async function listTasks(taskListName, isDetailed, listId, includeComplet
 		const tasks = await sortTasks(res.data.items);
 		if (tasks && tasks.length) {
 			console.log(chalk.greenBright.bold("Google Tasks: ") + "\n");
-			// const uncompletedTasks = await tasks.filter((task) => task.status === "completed");
-			await tasks.forEach((task) => {
+			await tasks.forEach((task, i) => {
 				if (isDetailed) console.log(task);
-				// console.log(task.due);
-				// console.log(task);
-
-				handleFormat(task.due, task.title);
-				if (listId) console.log(`Task ID: ${chalk.green(task.id)}`);
-				console.log("----------------------------");
+				handleFormat(task.due, task.title, i, listId === true ? task.id : false);
 			});
 		} else {
 			console.log("No task lists found.");
@@ -141,29 +163,48 @@ function sortTasks(arr) {
 	}
 	return arr;
 }
-export async function deleteTask(idArray) {
+async function postDeleteTask(taskId, taskListId) {
+	service.tasks.delete({
+		auth: auth,
+		tasklist: taskListId,
+		task: taskId,
+	});
+}
+export async function deleteTask(taskIdArray, taskListName) {
 	const spinner = createSpinner().start();
-	const taskList = await getTasklist();
+	const taskListId = await taskListNameToId(taskListName);
+	const isIndexArray = taskIdArray.every((element) => !isNaN(parseInt(element)));
+	if (isIndexArray) {
+		const indexArray = await bubbleSort(taskIdArray);
+		const temp = await getTasks(null, taskListId, false);
+		const tasks = await sortTasks(temp);
+		let arr = [];
+		for (let i = 0; i < indexArray.length; i++) {
+			if (indexArray[i] > indexArray.length - 1) {
+				console.log(chalk.red(`${taskListName} event ${indexArray[i]} cannot be found`));
+				throw new Error("An invalid index was provided");
+			}
+			arr.push(tasks[indexArray[i]].id);
+		}
+		taskIdArray = arr;
+	}
 	try {
-		idArray.forEach((id) => {
-			service.tasks.delete({
-				auth: auth,
-				tasklist: taskList[0].id,
-				task: id,
-			});
+		await taskIdArray.forEach((id) => {
+			postDeleteTask(id, taskListId);
 		});
-		console.log(`\n${idArray.length} Task${idArray.length > 1 ? "s" : ""} successfully deleted\n----------------------------`);
+		spinner.success();
+		console.log(`\n${taskIdArray.length} Task${taskIdArray.length > 1 ? "s" : ""} successfully deleted\n----------------------------`);
 	} catch (error) {
 		console.log(`Error deleting task: ${error}`);
 	}
-	spinner.success();
 }
-export async function completeTasks(idArray) {
+
+export async function completeTasks(taskIdArray) {
 	const spinner = createSpinner().start();
 	const taskList = await getTasklist();
 	const time = await getCurrentTime();
 	try {
-		await idArray.forEach((id) => {
+		await taskIdArray.forEach((id) => {
 			service.tasks.update({
 				auth: auth,
 				tasklist: taskList[0].id,
@@ -176,7 +217,7 @@ export async function completeTasks(idArray) {
 				},
 			});
 		});
-		console.log(`\n${idArray.length} Task${idArray.length > 1 ? "s" : ""} marked as complete\n----------------------------`);
+		console.log(`\n${taskIdArray.length} Task${taskIdArray.length > 1 ? "s" : ""} marked as complete\n----------------------------`);
 	} catch (error) {
 		console.log(`Error completing task: ${error}`);
 	}
